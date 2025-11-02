@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>HPTC: Chiến Tranh Chàng Béo</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #222;
+      color: #fff;
+      overflow: hidden;
+      user-select: none;
+    }
+    #game-container {
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+      background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%);
+      overflow: hidden;
+    }
+    #story {
+      position: absolute;
+      top: 20px; left: 20px; right: 20px;
+      background: rgba(0,0,0,0.7);
+      padding: 15px;
+      border-radius: 10px;
+      font-size: 18px;
+      z-index: 100;
+      display: none;
+    }
+    #ui {
+      position: absolute;
+      bottom: 20px; left: 20px; right: 20px;
+      display: flex;
+      justify-content: space-between;
+      background: rgba(0,0,0,0.6);
+      padding: 10px;
+      border-radius: 10px;
+      z-index: 100;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 0 5px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:disabled { background: #666; cursor: not-allowed; }
+    #gold { font-size: 20px; font-weight: bold; }
+    canvas { display: block; }
+
+    /* Stickman Animation */
+    .stickman {
+      position: absolute;
+      width: 30px;
+      height: 60px;
+      bottom: 80px;
+    }
+    .head { width: 12px; height: 12px; background: #fff; border-radius: 50%; position: absolute; top: 0; left: 9px; }
+    .body { width: 4px; height: 25px; background: #fff; position: absolute; top: 12px; left: 13px; }
+    .arm-l, .arm-r { width: 3px; height: 18px; background: #fff; position: absolute; top: 15px; transform-origin: top; }
+    .arm-l { left: 10px; transform: rotate(40deg); }
+    .arm-r { left: 16px; transform: rotate(-40deg); }
+    .leg-l, .leg-r { width: 3px; height: 25px; background: #fff; position: absolute; bottom: 0; transform-origin: top; }
+    .leg-l { left: 10px; transform: rotate(20deg); }
+    .leg-r { left: 16px; transform: rotate(-20deg); }
+
+    /* HPTC: Xanh lá | Phiến quân: Đỏ cam */
+    .hptc .head { background: #90EE90; }
+    .hptc .body, .hptc .arm-l, .hptc .arm-r, .hptc .leg-l, .hptc .leg-r { background: #228B22; }
+
+    .enemy .head { background: #FFB6C1; }
+    .enemy .body, .enemy .arm-l, .enemy .arm-r, .enemy .leg-l, .enemy .leg-r { background: #DC143C; }
+
+    /* Animation classes */
+    .walking .arm-l { animation: walk-arm-l 0.6s infinite alternate; }
+    .walking .arm-r { animation: walk-arm-r 0.6s infinite alternate; }
+    .walking .leg-l { animation: walk-leg-l 0.6s infinite alternate; }
+    .walking .leg-r { animation: walk-leg-r 0.6s infinite alternate; }
+
+    .attacking .arm-r { animation: attack 0.4s forwards; }
+
+    @keyframes walk-arm-l { 0% { transform: rotate(40deg); } 100% { transform: rotate(-20deg); } }
+    @keyframes walk-arm-r { 0% { transform: rotate(-40deg); } 100% { transform: rotate(20deg); } }
+    @keyframes walk-leg-l { 0% { transform: rotate(20deg); } 100% { transform: rotate(-30deg); } }
+    @keyframes walk-leg-r { 0% { transform: rotate(-20deg); } 100% { transform: rotate(30deg); } }
+    @keyframes attack { 0% { transform: rotate(-40deg); } 50% { transform: rotate(-100deg); } 100% { transform: rotate(-40deg); } }
+
+    .dead { animation: die 0.6s forwards; }
+    @keyframes die { to { transform: rotate(90deg); opacity: 0; } }
+
+    #ground {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      height: 80px;
+      background: #8B4513;
+      border-top: 5px solid #654321;
+    }
+    .tree {
+      position: absolute;
+      bottom: 80px;
+      width: 40px; height: 80px;
+    }
+    .tree::before {
+      content: ''; position: absolute;
+      bottom: 0; left: 15px;
+      width: 10px; height: 40px;
+      background: #8B4513;
+    }
+    .tree::after {
+      content: ''; position: absolute;
+      top: 0; left: 5px;
+      width: 30px; height: 50px;
+      background: #228B22;
+      border-radius: 50% 50% 40% 40%;
+    }
+  </style>
+</head>
+<body>
+
+<div id="game-container">
+  <div id="story">
+    <strong>Cốt truyện:</strong><br>
+    Đế chế <b>HPTC</b> – biểu tượng của trật tự và kỷ luật – đang mở rộng lãnh thổ.<br>
+    Nhưng tại vùng đất <b>Chàng Béo</b>, một nhóm <b>Phiến quân Béo Lầy</b> đã nổi dậy, chiếm giữ tài nguyên và chống lại luật pháp.<br><br>
+    <i>Bạn là Tướng quân HPTC. Hãy dẫn dắt quân đội, tiêu diệt phiến quân, lấy lại vùng đất Chàng Béo!</i><br><br>
+    <button onclick="startGame()">BẮT ĐẦU CHIẾN ĐẤU</button>
+  </div>
+
+  <div id="ui">
+    <div id="gold">Vàng: <span id="gold-amount">200</span></div>
+    <div>
+      <button id="btn-soldier" onclick="spawnUnit('soldier')">Lính Kiếm (50💰)</button>
+      <button id="btn-archer" onclick="spawnUnit('archer')">Cung Thủ (80💰)</button>
+      <button id="btn-giant" onclick="spawnUnit('giant')">Cự Nhân (200💰)</button>
+    </div>
+  </div>
+
+  <div id="ground"></div>
+  <canvas id="game-canvas"></canvas>
+</div>
+
+<script>
+  // === CỐT TRUYỆN & GAME STATE ===
+  const story = document.getElementById('story');
+  const ui = document.getElementById('ui');
+  const goldDisplay = document.getElementById('gold-amount');
+  let gold = 200;
+  let wave = 1;
+  let enemiesDefeated = 0;
+  let gameActive = false;
+
+  function startGame() {
+    story.style.display = 'none';
+    ui.style.display = 'flex';
+    gameActive = true;
+    spawnWave();
+    setInterval(autoGold, 3000);
+    setInterval(spawnWave, 15000);
+  }
+
+  function autoGold() {
+    if (!gameActive) return;
+    gold += 30;
+    updateGold();
+  }
+
+  // === CANVAS & UNITS ===
+  const canvas = document.getElementById('game-canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const units = [];
+  const enemies = [];
+  const projectiles = [];
+
+  class Unit {
+    constructor(x, type, team) {
+      this.x = x;
+      this.y = canvas.height - 140;
+      this.type = type;
+      this.team = team; // 'hptc' or 'enemy'
+      this.hp = this.getMaxHP();
+      this.speed = this.getSpeed();
+      this.damage = this.getDamage();
+      this.range = this.getRange();
+      this.target = null;
+      this.element = this.createElement();
+      this.dead = false;
+      this.attackCooldown = 0;
+    }
+
+    getMaxHP() {
+      const hp = { soldier: 100, archer: 60, giant: 300 };
+      return hp[this.type] || 100;
+    }
+    getSpeed() {
+      const speed = { soldier: 2, archer: 1.5, giant: 1 };
+      return speed[this.type] || 2;
+    }
+    getDamage() {
+      const dmg = { soldier: 15, archer: 20, giant: 50 };
+      return dmg[this.type] || 15;
+    }
+    getRange() {
+      const range = { soldier: 40, archer: 200, giant: 50 };
+      return range[this.type] || 40;
+    }
+
+    createElement() {
+      const div = document.createElement('div');
+      div.className = `stickman ${this.team} ${this.type}`;
+      div.style.left = this.x + 'px';
+      document.getElementById('game-container').appendChild(div);
+      return div;
+    }
+
+    update() {
+      if (this.dead) return;
+
+      // Tìm mục tiêu
+      const opponents = this.team === 'hptc' ? enemies : units;
+      this.target = opponents.find(u => 
+        !u.dead && Math.abs(u.x - this.x) < this.range
+      );
+
+      if (this.target) {
+        this.attack();
+      } else {
+        // Di chuyển
+        this.x += this.team === 'hptc' ? this.speed : -this.speed;
+        this.element.style.left = this.x + 'px';
+        this.element.classList.add('walking');
+      }
+
+      // Cooldown
+      if (this.attackCooldown > 0) this.attackCooldown--;
+
+      // Archer bắn tên
+      if (this.type === 'archer' && this.target && this.attackCooldown === 0) {
+        projectiles.push(new Projectile(this.x + 15, this.y + 20, this.target, this.damage));
+        this.attackCooldown = 40;
+      }
+    }
+
+    attack() {
+      if (this.attackCooldown > 0) return;
+      this.element.classList.add('attacking');
+      setTimeout(() => this.element.classList.remove('attacking'), 400);
+
+      if (this.target && !this.target.dead) {
+        this.target.takeDamage(this.damage);
+      }
+      this.attackCooldown = 30;
+    }
+
+    takeDamage(dmg) {
+      this.hp -= dmg;
+      if (this.hp <= 0 && !this.dead) {
+        this.die();
+      }
+    }
+
+    die() {
+      this.dead = true;
+      this.element.classList.add('dead');
+      setTimeout(() => {
+        this.element.remove();
+        if (this.team === 'enemy') {
+          enemiesDefeated++;
+          gold += 25;
+          updateGold();
+          if (enemiesDefeated % 10 === 0) wave++;
+        }
+      }, 600);
+    }
+  }
+
+  class Projectile {
+    constructor(x, y, target, damage) {
+      this.x = x; this.y = y;
+      this.target = target;
+      this.damage = damage;
+      this.speed = 8;
+    }
+    update() {
+      if (!this.target || this.target.dead) {
+        projectiles.splice(projectiles.indexOf(this), 1);
+        return;
+      }
+      const dx = this.target.x - this.x;
+      const dy = this.target.y + 20 - this.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < 10) {
+        this.target.takeDamage(this.damage);
+        projectiles.splice(projectiles.indexOf(this), 1);
+        return;
+      }
+      this.x += (dx / dist) * this.speed;
+      this.y += (dy / dist) * this.speed;
+    }
+    draw() {
+      ctx.fillStyle = '#FFD700';
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+
+  // === SPAWN UNIT ===
+  function spawnUnit(type) {
+    const cost = { soldier: 50, archer: 80, giant: 200 }[type];
+    if (gold < cost) return;
+    gold -= cost;
+    updateGold();
+
+    const unit = new Unit(100, type, 'hptc');
+    units.push(unit);
+    disableButtonsTemporarily();
+  }
+
+  function disableButtonsTemporarily() {
+    const buttons = document.querySelectorAll('#ui button');
+    buttons.forEach(b => b.disabled = true);
+    setTimeout(() => buttons.forEach(b => b.disabled = false), 500);
+  }
+
+  function updateGold() {
+    goldDisplay.textContent = gold;
+  }
+
+  // === SPAWN ENEMY WAVE ===
+  function spawnWave() {
+    if (!gameActive) return;
+    const enemyCount = 3 + wave * 2;
+    for (let i = 0; i < enemyCount; i++) {
+      setTimeout(() => {
+        const types = ['soldier', 'soldier', 'archer', wave > 3 ? 'giant' : 'soldier'];
+        const type = types[Math.floor(Math.random() * types.length)];
+        const enemy = new Unit(canvas.width - 150 - i * 60, type, 'enemy');
+        enemies.push(enemy);
+      }, i * 800);
+    }
+  }
+
+  // === DECOR: Cây ngẫu nhiên ===
+  function spawnTrees() {
+    for (let i = 0; i < 8; i++) {
+      const tree = document.createElement('div');
+      tree.className = 'tree';
+      tree.style.left = (200 + i * 200 + Math.random() * 100) + 'px';
+      document.getElementById('game-container').appendChild(tree);
+    }
+  }
+  spawnTrees();
+
+  // === GAME LOOP ===
+  function gameLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Update & draw projectiles
+    projectiles.forEach(p => { p.update(); p.draw(); });
+
+    // Update units
+    [...units, ...enemies].forEach(u => {
+      if (!u.dead) u.update();
+    });
+
+    // Cleanup dead
+    units = units.filter(u => !u.dead);
+    enemies = enemies.filter(e => !e.dead);
+
+    // Win condition
+    if (enemiesDefeated >= 50 && gameActive) {
+      alert(`CHIẾN THẮNG! HPTC đã thống nhất Chàng Béo!`);
+      gameActive = false;
+    }
+
+    requestAnimationFrame(gameLoop);
+  }
+
+  // Start story
+  story.style.display = 'block';
+  gameLoop();
+
+  // Resize
+  window.addEventListener('resize', () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+</script>
+
+</body>
+</html>
