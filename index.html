@@ -2,191 +2,391 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HPTC: Chiến Tranh Chàng Béo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="screen-orientation" content="landscape"/>
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>HPTC: Boss Chàng Béo</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: 'Arial', sans-serif;
-      background: #222;
-      color: #fff;
+    html, body {
+      width: 100%; height: 100%;
       overflow: hidden;
-      user-select: none;
+      background: #000;
+      font-family: 'Arial', sans-serif;
+      -webkit-tap-highlight-color: transparent;
     }
+
+    #rotate-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #111;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      text-align: center;
+      padding: 20px;
+      font-size: 18px;
+    }
+    #rotate-screen img {
+      width: 60px; height: 60px; margin-bottom: 20px;
+      animation: rotate 2s infinite linear;
+    }
+    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
     #game-container {
-      width: 100vw;
-      height: 100vh;
+      width: 100vw; height: 100vh;
       position: relative;
       background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%);
       overflow: hidden;
-    }
-    #story {
-      position: absolute;
-      top: 20px; left: 20px; right: 20px;
-      background: rgba(0,0,0,0.7);
-      padding: 15px;
-      border-radius: 10px;
-      font-size: 18px;
-      z-index: 100;
       display: none;
     }
-    #ui {
+
+    #story {
       position: absolute;
-      bottom: 20px; left: 20px; right: 20px;
-      display: flex;
-      justify-content: space-between;
-      background: rgba(0,0,0,0.6);
-      padding: 10px;
-      border-radius: 10px;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.85);
+      padding: 20px;
+      border-radius: 15px;
+      max-width: 90%;
+      text-align: center;
       z-index: 100;
+      font-size: 16px;
+      line-height: 1.5;
     }
-    button {
-      padding: 10px 20px;
-      margin: 0 5px;
+    #story button {
+      margin-top: 20px;
+      padding: 12px 30px;
+      font-size: 18px;
       background: #4CAF50;
       color: white;
       border: none;
-      border-radius: 5px;
-      cursor: pointer;
+      border-radius: 10px;
       font-weight: bold;
     }
-    button:disabled { background: #666; cursor: not-allowed; }
-    #gold { font-size: 20px; font-weight: bold; }
-    canvas { display: block; }
 
-    /* Stickman Animation */
+    /* UI NÂNG CẤP */
+    #ui {
+      position: absolute;
+      bottom: 10px; left: 10px; right: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(0,0,0,0.7);
+      padding: 15px;
+      border-radius: 15px;
+      z-index: 100;
+    }
+    #stats {
+      display: flex;
+      justify-content: space-between;
+      font-size: 16px; font-weight: bold;
+      color: #FFD700;
+      flex-wrap: wrap;
+    }
+    #wave-display { color: #FF5722; font-size: 20px; }
+    
+    .btn-row { display: flex; gap: 8px; justify-content: center; }
+    button {
+      flex: 1;
+      min-width: 75px;
+      padding: 14px 8px;
+      font-size: 14px;
+      font-weight: bold;
+      border: none;
+      border-radius: 10px;
+      touch-action: manipulation;
+      transition: all 0.2s;
+    }
+    button:active { transform: scale(0.95); }
+    
+    .btn-gold { background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; }
+    .btn-soldier { background: #4CAF50; }
+    .btn-archer { background: #2196F3; }
+    .btn-giant { background: #FF5722; }
+    
+    button:disabled { 
+      background: #666 !important; 
+      color: #aaa; 
+      transform: none !important;
+    }
+
+    /* TƯỢNG */
+    .statue {
+      position: absolute;
+      width: 120px; height: 200px;
+      bottom: 95px;
+    }
+    .statue::before {
+      content: ''; position: absolute;
+      width: 100%; height: 100%;
+      background: #8B4513;
+      border-radius: 10px;
+    }
+    .statue::after {
+      content: ''; position: absolute;
+      top: 20%; left: 20%; right: 20%; height: 60%;
+      background: #FFD700;
+      border-radius: 50%;
+      box-shadow: 0 0 20px #FFD700;
+    }
+    #player-statue { left: 30px; }
+    #enemy-statue { right: 30px; }
+    .statue.damaged::after { background: #FF8C00; box-shadow: 0 0 10px #FF8C00; }
+
+    /* STICKMAN */
     .stickman {
       position: absolute;
-      width: 30px;
-      height: 60px;
-      bottom: 80px;
+      width: 45px; height: 85px;
+      bottom: 95px;
+      transform: scale(0.85);
     }
-    .head { width: 12px; height: 12px; background: #fff; border-radius: 50%; position: absolute; top: 0; left: 9px; }
-    .body { width: 4px; height: 25px; background: #fff; position: absolute; top: 12px; left: 13px; }
-    .arm-l, .arm-r { width: 3px; height: 18px; background: #fff; position: absolute; top: 15px; transform-origin: top; }
-    .arm-l { left: 10px; transform: rotate(40deg); }
-    .arm-r { left: 16px; transform: rotate(-40deg); }
-    .leg-l, .leg-r { width: 3px; height: 25px; background: #fff; position: absolute; bottom: 0; transform-origin: top; }
-    .leg-l { left: 10px; transform: rotate(20deg); }
-    .leg-r { left: 16px; transform: rotate(-20deg); }
+    /* BOSS SIZE 3X */
+    .boss { transform: scale(2.5) !important; width: 90px !important; height: 170px !important; }
+    .boss .head { width: 36px !important; height: 36px !important; left: 26px !important; }
+    .boss .body { width: 12px !important; height: 64px !important; left: 38px !important; top: 36px !important; }
+    
+    .head { width: 18px; height: 18px; border-radius: 50%; position: absolute; top: 0; left: 13px; }
+    .body { width: 6px; height: 32px; position: absolute; top: 18px; left: 19px; }
+    .arm-l, .arm-r { width: 5px; height: 24px; position: absolute; top: 20px; transform-origin: top; }
+    .arm-l { left: 14px; transform: rotate(40deg); }
+    .arm-r { left: 21px; transform: rotate(-40deg); }
+    .leg-l, .leg-r { width: 5px; height: 32px; position: absolute; bottom: 0; transform-origin: top; }
+    .leg-l { left: 14px; transform: rotate(20deg); }
+    .leg-r { left: 21px; transform: rotate(-20deg); }
 
-    /* HPTC: Xanh lá | Phiến quân: Đỏ cam */
+    /* MÀU */
     .hptc .head { background: #90EE90; }
     .hptc .body, .hptc .arm-l, .hptc .arm-r, .hptc .leg-l, .hptc .leg-r { background: #228B22; }
-
     .enemy .head { background: #FFB6C1; }
     .enemy .body, .enemy .arm-l, .enemy .arm-r, .enemy .leg-l, .enemy .leg-r { background: #DC143C; }
+    .miner .head { background: #FFD700; }
+    .miner .body, .miner .arm-l, .miner .arm-r, .miner .leg-l, .miner .leg-r { background: #FFA500; }
 
-    /* Animation classes */
+    /* ANIMATIONS */
     .walking .arm-l { animation: walk-arm-l 0.6s infinite alternate; }
     .walking .arm-r { animation: walk-arm-r 0.6s infinite alternate; }
     .walking .leg-l { animation: walk-leg-l 0.6s infinite alternate; }
     .walking .leg-r { animation: walk-leg-r 0.6s infinite alternate; }
-
     .attacking .arm-r { animation: attack 0.4s forwards; }
+    .mining .arm-l { animation: mining 1s infinite; }
 
     @keyframes walk-arm-l { 0% { transform: rotate(40deg); } 100% { transform: rotate(-20deg); } }
     @keyframes walk-arm-r { 0% { transform: rotate(-40deg); } 100% { transform: rotate(20deg); } }
     @keyframes walk-leg-l { 0% { transform: rotate(20deg); } 100% { transform: rotate(-30deg); } }
     @keyframes walk-leg-r { 0% { transform: rotate(-20deg); } 100% { transform: rotate(30deg); } }
     @keyframes attack { 0% { transform: rotate(-40deg); } 50% { transform: rotate(-100deg); } 100% { transform: rotate(-40deg); } }
-
+    @keyframes mining { 0%, 100% { transform: rotate(40deg); } 50% { transform: rotate(0deg); } }
     .dead { animation: die 0.6s forwards; }
     @keyframes die { to { transform: rotate(90deg); opacity: 0; } }
 
     #ground {
       position: absolute;
       bottom: 0; left: 0; right: 0;
-      height: 80px;
+      height: 95px;
       background: #8B4513;
-      border-top: 5px solid #654321;
+      border-top: 7px solid #654321;
     }
     .tree {
       position: absolute;
-      bottom: 80px;
-      width: 40px; height: 80px;
+      bottom: 95px;
+      width: 55px; height: 105px;
     }
     .tree::before {
       content: ''; position: absolute;
-      bottom: 0; left: 15px;
-      width: 10px; height: 40px;
+      bottom: 0; left: 22px;
+      width: 13px; height: 48px;
       background: #8B4513;
     }
     .tree::after {
       content: ''; position: absolute;
-      top: 0; left: 5px;
-      width: 30px; height: 50px;
+      top: 0; left: 9px;
+      width: 37px; height: 65px;
       background: #228B22;
       border-radius: 50% 50% 40% 40%;
     }
+
+    canvas { display: block; image-rendering: pixelated; }
+    
+    /* BOSS DIALOG */
+    #boss-dialog {
+      position: absolute;
+      top: 50px; right: 20px;
+      background: rgba(220,20,60,0.9);
+      color: #fff;
+      padding: 15px;
+      border-radius: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      max-width: 250px;
+      display: none;
+      text-shadow: 2px 2px 4px #000;
+      animation: bossShake 0.5s infinite;
+    }
+    @keyframes bossShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
   </style>
 </head>
 <body>
 
+<div id="rotate-screen">
+  <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9IiNmZmYiIHN0cm9rZS13aWR0aD0iMiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHg9IjMiIHk9IjMiIHJ4PSIyIiByeT0iMiIvPjxsaW5lIHgxPSI5IiB5MT0iOSIgeDI9IjE1IiB5Mj0iMTUiLz48bGluZSB4MT0iMTUiIHkxPSI5IiB4Mj0iOSIgeTI9IjE1Ii8+PC9zdmc+" alt="Xoay">
+  <p><strong>Xoay ngang để chơi!</strong></p>
+</div>
+
 <div id="game-container">
+  <div id="boss-dialog"></div>
+  
   <div id="story">
-    <strong>Cốt truyện:</strong><br>
-    Đế chế <b>HPTC</b> – biểu tượng của trật tự và kỷ luật – đang mở rộng lãnh thổ.<br>
-    Nhưng tại vùng đất <b>Chàng Béo</b>, một nhóm <b>Phiến quân Béo Lầy</b> đã nổi dậy, chiếm giữ tài nguyên và chống lại luật pháp.<br><br>
-    <i>Bạn là Tướng quân HPTC. Hãy dẫn dắt quân đội, tiêu diệt phiến quân, lấy lại vùng đất Chàng Béo!</i><br><br>
-    <button onclick="startGame()">BẮT ĐẦU CHIẾN ĐẤU</button>
+    <strong>🏰 HPTC: BOSS CHÀNG BÉO 🏰</strong><br><br>
+    <b>Phiến quân Béo Lầy</b> chiếm <b>Chàng Béo</b>!<br>
+    <b>30 MÀN + BOSS CUỐI</b><br>
+    <b>Phá tượng địch → THẮNG</b><br>
+    <b>Bảo vệ tượng HPTC → KHÔNG ĐỂ PHÁ</b><br><br>
+    <button onclick="startGame()">⚔️ BẮT ĐẦU ⚔️</button>
   </div>
 
-  <div id="ui">
-    <div id="gold">Vàng: <span id="gold-amount">200</span></div>
-    <div>
-      <button id="btn-soldier" onclick="spawnUnit('soldier')">Lính Kiếm (50💰)</button>
-      <button id="btn-archer" onclick="spawnUnit('archer')">Cung Thủ (80💰)</button>
-      <button id="btn-giant" onclick="spawnUnit('giant')">Cự Nhân (200💰)</button>
+  <div id="ui" style="display:none;">
+    <div id="stats">
+      <div id="wave-display">⚔️ Màn: <span id="wave-number">1</span>/30</div>
+      <div id="gold">💰 <span id="gold-amount">500</span></div>
+      <div id="army-count">⚔️ <span id="army-count-display">0</span>/120</div>
+      <div id="miners-count">⛏️ <span id="miners-count-display">0</span>/15</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn-gold" id="btn-miner" onclick="spawnMiner()">⛏️ Đào (100)</button>
+      <button class="btn-soldier" id="btn-soldier" onclick="spawnUnit('soldier')">⚔️ Kiếm (50)</button>
+      <button class="btn-archer" id="btn-archer" onclick="spawnUnit('archer')">🏹 Cung (80)</button>
+    </div>
+    <div class="btn-row">
+      <button class="btn-giant" id="btn-giant" onclick="spawnUnit('giant')">🗡️ Cự (200)</button>
     </div>
   </div>
 
+  <div id="player-statue" class="statue"></div>
+  <div id="enemy-statue" class="statue"></div>
   <div id="ground"></div>
   <canvas id="game-canvas"></canvas>
 </div>
 
 <script>
-  // === CỐT TRUYỆN & GAME STATE ===
-  const story = document.getElementById('story');
-  const ui = document.getElementById('ui');
-  const goldDisplay = document.getElementById('gold-amount');
-  let gold = 200;
-  let wave = 1;
-  let enemiesDefeated = 0;
-  let gameActive = false;
-
-  function startGame() {
-    story.style.display = 'none';
-    ui.style.display = 'flex';
-    gameActive = true;
-    spawnWave();
-    setInterval(autoGold, 3000);
-    setInterval(spawnWave, 15000);
+  // === ORIENTATION ===
+  const rotateScreen = document.getElementById('rotate-screen');
+  const gameContainer = document.getElementById('game-container');
+  function checkOrientation() {
+    if (window.innerHeight > window.innerWidth) {
+      rotateScreen.style.display = 'flex';
+      gameContainer.style.display = 'none';
+    } else {
+      rotateScreen.style.display = 'none';
+      gameContainer.style.display = 'block';
+      resizeCanvas();
+    }
   }
+  window.addEventListener('resize', checkOrientation);
+  window.addEventListener('orientationchange', checkOrientation);
+  checkOrientation();
 
-  function autoGold() {
-    if (!gameActive) return;
-    gold += 30;
-    updateGold();
-  }
-
-  // === CANVAS & UNITS ===
+  // === CANVAS ===
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
 
-  const units = [];
-  const enemies = [];
-  const projectiles = [];
+  // === STATE ===
+  let gold = 500, wave = 1, maxWaves = 30, gameActive = false;
+  const MAX_ARMY = 120, MAX_MINERS = 15;
+  let units = [], enemies = [], miners = [], projectiles = [];
+  let playerStatueHP = 5000, enemyStatueHP = 8000;
+  const bossDialog = document.getElementById('boss-dialog');
 
+  const displays = {
+    gold: document.getElementById('gold-amount'),
+    army: document.getElementById('army-count-display'),
+    miners: document.getElementById('miners-count-display'),
+    wave: document.getElementById('wave-number')
+  };
+
+  function startGame() {
+    document.getElementById('story').style.display = 'none';
+    document.getElementById('ui').style.display = 'block';
+    gameActive = true;
+    spawnWave();
+    setInterval(spawnWave, 20000);
+    setInterval(updateDisplays, 100);
+  }
+
+  function updateDisplays() {
+    displays.gold.textContent = gold;
+    displays.army.textContent = units.length;
+    displays.miners.textContent = miners.length;
+    displays.wave.textContent = wave;
+    
+    // Update statue classes
+    document.getElementById('player-statue').classList.toggle('damaged', playerStatueHP < 2500);
+    document.getElementById('enemy-statue').classList.toggle('damaged', enemyStatueHP < 4000);
+  }
+
+  // === SPAWN ===
+  function spawnMiner() {
+    if (miners.length >= MAX_MINERS || gold < 100) return;
+    gold -= 100;
+    miners.push(new Miner(120));
+    disableButtons();
+  }
+
+  function spawnUnit(type) {
+    if (units.length >= MAX_ARMY || gold < getUnitCost(type)) return;
+    gold -= getUnitCost(type);
+    units.push(new Unit(80, type, 'hptc'));
+    disableButtons();
+  }
+
+  function getUnitCost(type) { return { soldier: 50, archer: 80, giant: 200 }[type]; }
+  function disableButtons() {
+    const btns = document.querySelectorAll('button');
+    btns.forEach(b => b.disabled = true);
+    setTimeout(() => btns.forEach(b => b.disabled = false), 400);
+  }
+
+  // === MINER ===
+  class Miner {
+    constructor(x) {
+      this.x = x;
+      this.y = canvas.height - 165;
+      this.element = this.createElement();
+      this.miningCooldown = 0;
+    }
+    createElement() {
+      const div = document.createElement('div');
+      div.className = 'stickman miner';
+      div.style.left = this.x + 'px';
+      gameContainer.appendChild(div);
+      return div;
+    }
+    update() {
+      this.element.classList.add('mining');
+      if (this.miningCooldown <= 0) {
+        gold += 35;
+        this.miningCooldown = 180;
+      }
+      this.miningCooldown--;
+    }
+  }
+
+  // === UNIT ===
   class Unit {
     constructor(x, type, team) {
       this.x = x;
-      this.y = canvas.height - 140;
+      this.y = canvas.height - 160;
       this.type = type;
-      this.team = team; // 'hptc' or 'enemy'
+      this.team = team;
       this.hp = this.getMaxHP();
+      this.maxHP = this.hp;
       this.speed = this.getSpeed();
       this.damage = this.getDamage();
       this.range = this.getRange();
@@ -194,57 +394,51 @@
       this.element = this.createElement();
       this.dead = false;
       this.attackCooldown = 0;
+      this.isBoss = type === 'boss';
     }
 
-    getMaxHP() {
-      const hp = { soldier: 100, archer: 60, giant: 300 };
-      return hp[this.type] || 100;
+    getMaxHP() { 
+      const base = { soldier: 100, archer: 60, giant: 300 };
+      return this.isBoss ? 2000 : (base[this.type] || 100); 
     }
-    getSpeed() {
-      const speed = { soldier: 2, archer: 1.5, giant: 1 };
-      return speed[this.type] || 2;
+    getSpeed() { 
+      const base = { soldier: 2.5, archer: 1.8, giant: 1.2 };
+      return this.isBoss ? 1.5 : (base[this.type] || 2); 
     }
-    getDamage() {
-      const dmg = { soldier: 15, archer: 20, giant: 50 };
-      return dmg[this.type] || 15;
+    getDamage() { 
+      const base = { soldier: 15, archer: 20, giant: 50 };
+      return this.isBoss ? 80 : (base[this.type] || 15); 
     }
-    getRange() {
-      const range = { soldier: 40, archer: 200, giant: 50 };
-      return range[this.type] || 40;
+    getRange() { 
+      const base = { soldier: 50, archer: 220, giant: 60 };
+      return this.isBoss ? 100 : (base[this.type] || 50); 
     }
 
     createElement() {
       const div = document.createElement('div');
-      div.className = `stickman ${this.team} ${this.type}`;
+      div.className = `stickman ${this.team} ${this.type} ${this.isBoss ? 'boss' : ''}`;
       div.style.left = this.x + 'px';
-      document.getElementById('game-container').appendChild(div);
+      gameContainer.appendChild(div);
       return div;
     }
 
     update() {
       if (this.dead) return;
 
-      // Tìm mục tiêu
-      const opponents = this.team === 'hptc' ? enemies : units;
-      this.target = opponents.find(u => 
-        !u.dead && Math.abs(u.x - this.x) < this.range
-      );
+      const targets = this.team === 'hptc' ? [...enemies, enemyStatue] : [...units, playerStatue];
+      this.target = targets.find(t => !t.dead && Math.abs(t.x - this.x) < this.range);
 
       if (this.target) {
         this.attack();
       } else {
-        // Di chuyển
         this.x += this.team === 'hptc' ? this.speed : -this.speed;
         this.element.style.left = this.x + 'px';
         this.element.classList.add('walking');
       }
 
-      // Cooldown
       if (this.attackCooldown > 0) this.attackCooldown--;
-
-      // Archer bắn tên
       if (this.type === 'archer' && this.target && this.attackCooldown === 0) {
-        projectiles.push(new Projectile(this.x + 15, this.y + 20, this.target, this.damage));
+        projectiles.push(new Projectile(this.x + 20, this.y + 25, this.target, this.damage));
         this.attackCooldown = 40;
       }
     }
@@ -253,18 +447,13 @@
       if (this.attackCooldown > 0) return;
       this.element.classList.add('attacking');
       setTimeout(() => this.element.classList.remove('attacking'), 400);
-
-      if (this.target && !this.target.dead) {
-        this.target.takeDamage(this.damage);
-      }
-      this.attackCooldown = 30;
+      if (this.target && !this.target.dead) this.target.takeDamage(this.damage);
+      this.attackCooldown = this.isBoss ? 20 : 30;
     }
 
     takeDamage(dmg) {
       this.hp -= dmg;
-      if (this.hp <= 0 && !this.dead) {
-        this.die();
-      }
+      if (this.hp <= 0 && !this.dead) this.die();
     }
 
     die() {
@@ -272,32 +461,55 @@
       this.element.classList.add('dead');
       setTimeout(() => {
         this.element.remove();
-        if (this.team === 'enemy') {
-          enemiesDefeated++;
-          gold += 25;
-          updateGold();
-          if (enemiesDefeated % 10 === 0) wave++;
+        if (this.team === 'enemy' && !this.isBoss) {
+          gold += 30;
+          if (enemies.length === 0) nextWave();
         }
       }, 600);
     }
   }
 
+  // === STATUES ===
+  const playerStatue = {
+    x: 100, hp: 5000, maxHP: 5000, dead: false,
+    takeDamage(dmg) { 
+      this.hp -= dmg; 
+      if (this.hp <= 0) {
+        alert('💀 TƯỢNG HPTC BỊ PHÁ! THUA! 💀');
+        gameActive = false;
+      }
+    }
+  };
+  const enemyStatue = {
+    x: window.innerWidth - 200, hp: 8000, maxHP: 8000, dead: false,
+    takeDamage(dmg) { 
+      this.hp -= dmg; 
+      if (this.hp <= 0) {
+        alert('🎉 PHÁ TƯỢNG ĐỊCH! HPTC THẮNG! 🎉');
+        gameActive = false;
+      }
+    }
+  };
+
+  // === PROJECTILE ===
   class Projectile {
     constructor(x, y, target, damage) {
       this.x = x; this.y = y;
       this.target = target;
       this.damage = damage;
-      this.speed = 8;
+      this.speed = 10;
     }
     update() {
-      if (!this.target || this.target.dead) {
-        projectiles.splice(projectiles.indexOf(this), 1);
-        return;
+      if (!this.target || this.target.dead || this.target.hp <= 0) { 
+        projectiles.splice(projectiles.indexOf(this), 1); 
+        return; 
       }
-      const dx = this.target.x - this.x;
-      const dy = this.target.y + 20 - this.y;
+      const tx = this.target.x || this.target.x;
+      const ty = this.target.y || (canvas.height - 160);
+      const dx = tx - this.x;
+      const dy = ty - this.y;
       const dist = Math.hypot(dx, dy);
-      if (dist < 10) {
+      if (dist < 20) {
         this.target.takeDamage(this.damage);
         projectiles.splice(projectiles.indexOf(this), 1);
         return;
@@ -308,92 +520,83 @@
     draw() {
       ctx.fillStyle = '#FFD700';
       ctx.beginPath();
-      ctx.arc(this.x, this.y, 4, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, 5, 0, Math.PI * 2);
       ctx.fill();
     }
   }
 
-  // === SPAWN UNIT ===
-  function spawnUnit(type) {
-    const cost = { soldier: 50, archer: 80, giant: 200 }[type];
-    if (gold < cost) return;
-    gold -= cost;
-    updateGold();
-
-    const unit = new Unit(100, type, 'hptc');
-    units.push(unit);
-    disableButtonsTemporarily();
-  }
-
-  function disableButtonsTemporarily() {
-    const buttons = document.querySelectorAll('#ui button');
-    buttons.forEach(b => b.disabled = true);
-    setTimeout(() => buttons.forEach(b => b.disabled = false), 500);
-  }
-
-  function updateGold() {
-    goldDisplay.textContent = gold;
-  }
-
-  // === SPAWN ENEMY WAVE ===
+  // === WAVES ===
+  let enemiesDefeatedThisWave = 0;
   function spawnWave() {
-    if (!gameActive) return;
-    const enemyCount = 3 + wave * 2;
-    for (let i = 0; i < enemyCount; i++) {
+    if (!gameActive || wave > maxWaves) return;
+    
+    enemiesDefeatedThisWave = 0;
+    const count = 5 + wave * 3;
+    bossDialog.textContent = `Địt mẹ chúng mày! Sóng ${wave}!`;
+    bossDialog.style.display = wave >= 25 ? 'block' : 'none';
+    
+    if (wave === 30) {
+      // BOSS CUỐI
       setTimeout(() => {
-        const types = ['soldier', 'soldier', 'archer', wave > 3 ? 'giant' : 'soldier'];
+        const boss = new Unit(canvas.width - 300, 'boss', 'enemy');
+        enemies.push(boss);
+        bossDialog.textContent = 'Địt mẹ chúng mày! Mảnh đất Chàng Béo này là của tao!';
+      }, 1000);
+      return;
+    }
+
+    for (let i = 0; i < count; i++) {
+      setTimeout(() => {
+        const types = wave > 20 ? ['soldier', 'archer', 'giant'] : 
+                     wave > 10 ? ['soldier', 'archer', 'giant'] : ['soldier', 'archer'];
         const type = types[Math.floor(Math.random() * types.length)];
-        const enemy = new Unit(canvas.width - 150 - i * 60, type, 'enemy');
-        enemies.push(enemy);
-      }, i * 800);
+        enemies.push(new Unit(canvas.width - 150 - i * 60, type, 'enemy'));
+      }, i * 600);
     }
   }
 
-  // === DECOR: Cây ngẫu nhiên ===
+  function nextWave() {
+    wave++;
+    enemiesDefeatedThisWave = 0;
+    if (wave > maxWaves) return;
+    setTimeout(spawnWave, 3000);
+  }
+
+  // === TREES ===
   function spawnTrees() {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 6; i++) {
       const tree = document.createElement('div');
       tree.className = 'tree';
       tree.style.left = (200 + i * 200 + Math.random() * 100) + 'px';
-      document.getElementById('game-container').appendChild(tree);
+      gameContainer.appendChild(tree);
     }
   }
   spawnTrees();
 
-  // === GAME LOOP ===
+  // === LOOP ===
   function gameLoop() {
+    if (!gameActive) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Update & draw projectiles
-    projectiles.forEach(p => { p.update(); p.draw(); });
-
-    // Update units
-    [...units, ...enemies].forEach(u => {
-      if (!u.dead) u.update();
+    projectiles.forEach((p, i) => { 
+      p.update(); 
+      if (p.target.hp <= 0 || !p.target) projectiles.splice(i, 1);
+      else p.draw(); 
     });
 
-    // Cleanup dead
-    units = units.filter(u => !u.dead);
-    enemies = enemies.filter(e => !e.dead);
+    [...units, ...enemies].forEach(u => { if (!u.dead && u.hp > 0) u.update(); });
+    miners.forEach(m => m.update());
 
-    // Win condition
-    if (enemiesDefeated >= 50 && gameActive) {
-      alert(`CHIẾN THẮNG! HPTC đã thống nhất Chàng Béo!`);
-      gameActive = false;
-    }
+    units = units.filter(u => !u.dead && u.hp > 0);
+    enemies = enemies.filter(e => !e.dead && e.hp > 0);
 
     requestAnimationFrame(gameLoop);
   }
 
-  // Start story
-  story.style.display = 'block';
+  // START
+  resizeCanvas();
+  updateDisplays();
   gameLoop();
-
-  // Resize
-  window.addEventListener('resize', () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  });
 </script>
 
 </body>
