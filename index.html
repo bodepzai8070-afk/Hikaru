@@ -1,383 +1,128 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
-  <meta name="apple-mobile-web-app-capable" content="no"/>
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="theme-color" content="#000000">
-  <meta name="format-detection" content="telephone=no">
-  <title>HPTC: Chàng Béo (Android Only)</title>
-  <link rel="manifest" href="data:application/manifest+json,{
-    \"name\": \"HPTC Stick War\",
-    \"short_name\": \"HPTC\",
-    \"start_url\": \".\",
-    \"display\": \"fullscreen\",
-    \"orientation\": \"landscape\",
-    \"background_color\": \"#000\",
-    \"theme_color\": \"#000\"
-  }">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      width: 100%; height: 100%;
-      overflow: hidden;
-      background: #000;
-      font-family: 'Arial', sans-serif;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-
-    /* iOS KICK SCREEN */
-    #ios-kick {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #DC143C;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 999999;
-      text-align: center;
-      padding: 30px;
-      font-size: 20px;
-      line-height: 1.6;
-    }
-    #ios-kick h1 { font-size: 28px; margin-bottom: 20px; }
-    #ios-kick button {
-      margin-top: 30px;
-      padding: 15px 40px;
-      background: #000;
-      color: #fff;
-      border: none;
-      border-radius: 15px;
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    /* GAME CONTAINER - FULLSCREEN */
-    #game-container {
-      width: 100vw; height: 100vh;
-      position: fixed;
-      top: 0; left: 0;
-      background: linear-gradient(to bottom, #87CEEB 0%, #98FB98 100%);
-      overflow: hidden;
-      display: none;
-    }
-
-    /* STORY */
-    #story {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      background: rgba(0,0,0,0.9);
-      padding: 25px;
-      border-radius: 20px;
-      max-width: 92%;
-      text-align: center;
-      z-index: 100;
-      font-size: 17px;
-      line-height: 1.6;
-      color: #fff;
-    }
-    #story button {
-      margin-top: 25px;
-      padding: 14px 35px;
-      font-size: 19px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-weight: bold;
-    }
-
-    /* UI - SIÊU LỚN CHO ĐIỆN THOẠI */
-    #ui {
-      position: absolute;
-      bottom: 8px; left: 8px; right: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      background: rgba(0,0,0,0.75);
-      padding: 16px;
-      border-radius: 18px;
-      z-index: 100;
-    }
-    #stats {
-      display: flex;
-      justify-content: space-between;
-      font-size: 17px; font-weight: bold;
-      color: #FFD700;
-      flex-wrap: wrap;
-      gap: 8px;
-    }
-    #wave-display { color: #FF5722; font-size: 19px; }
-
-    .btn-row { display: flex; gap: 10px; justify-content: center; }
-    button {
-      flex: 1;
-      min-width: 80px;
-      padding: 16px 10px;
-      font-size: 15px;
-      font-weight: bold;
-      border: none;
-      border-radius: 12px;
-      touch-action: manipulation;
-      transition: all 0.2s;
-    }
-    button:active { transform: scale(0.92); }
-
-    .btn-gold { background: linear-gradient(45deg, #FFD700, #FFA500); color: #000; }
-    .btn-soldier { background: #4CAF50; }
-    .btn-archer { background: #2196F3; }
-    .btn-giant { background: #FF5722; }
-
-    button:disabled { background: #444 !important; color: #888; }
-
-    /* TƯỢNG & STICKMAN */
-    .statue { position: absolute; width: 110px; height: 180px; bottom: 90px; }
-    #player-statue { left: 15px; }
-    #enemy-statue { right: 15px; }
-
-    .stickman {
-      position: absolute;
-      width: 48px; height: 88px;
-      bottom: 90px;
-      transform: scale(0.9);
-    }
-    .boss { transform: scale(2.8) !important; width: 100px !important; height: 180px !important; }
-    .boss .head { width: 38px !important; height: 38px !important; left: 28px !important; }
-    .boss .body { width: 14px !important; height: 68px !important; left: 42px !important; top: 38px !important; }
-
-    .head { width: 19px; height: 19px; border-radius: 50%; position: absolute; top: 0; left: 14px; }
-    .body { width: 6px; height: 34px; position: absolute; top: 19px; left: 20px; }
-    .arm-l, .arm-r { width: 5px; height: 25px; position: absolute; top: 21px; transform-origin: top; }
-    .arm-l { left: 15px; transform: rotate(40deg); }
-    .arm-r { left: 22px; transform: rotate(-40deg); }
-    .leg-l, .leg-r { width: 5px; height: 34px; position: absolute; bottom: 0; transform-origin: top; }
-    .leg-l { left: 15px; transform: rotate(20deg); }
-    .leg-r { left: 22px; transform: rotate(-20deg); }
-
-    .hptc .head { background: #90EE90; }
-    .hptc .body, .hptc .arm-l, .hptc .arm-r, .hptc .leg-l, .hptc .leg-r { background: #228B22; }
-    .enemy .head { background: #FFB6C1; }
-    .enemy .body, .enemy .arm-l, .enemy .arm-r, .enemy .leg-l, .enemy .leg-r { background: #DC143C; }
-    .miner .head { background: #FFD700; }
-    .miner .body, .miner .arm-l, .miner .arm-r, .miner .leg-l, .miner .leg-r { background: #FFA500; }
-
-    .walking .arm-l { animation: walk-arm-l 0.6s infinite alternate; }
-    .walking .arm-r { animation: walk-arm-r 0.6s infinite alternate; }
-    .walking .leg-l { animation: walk-leg-l 0.6s infinite alternate; }
-    .walking .leg-r { animation: walk-leg-r 0.6s infinite alternate; }
-    .attacking .arm-r { animation: attack 0.4s forwards; }
-    .mining .arm-l { animation: mining 1s infinite; }
-
-    @keyframes walk-arm-l { 0% { transform: rotate(40deg); } 100% { transform: rotate(-20deg); } }
-    @keyframes walk-arm-r { 0% { transform: rotate(-40deg); } 100% { transform: rotate(20deg); } }
-    @keyframes walk-leg-l { 0% { transform: rotate(20deg); } 100% { transform: rotate(-30deg); } }
-    @keyframes walk-leg-r { 0% { transform: rotate(-20deg); } 100% { transform: rotate(30deg); } }
-    @keyframes attack { 0% { transform: rotate(-40deg); } 50% { transform: rotate(-100deg); } 100% { transform: rotate(-40deg); } }
-    @keyframes mining { 0%, 100% { transform: rotate(40deg); } 50% { transform: rotate(0deg); } }
-    .dead { animation: die 0.6s forwards; }
-    @keyframes die { to { transform: rotate(90deg); opacity: 0; } }
-
-    #ground {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      height: 90px;
-      background: #8B4513;
-      border-top: 7px solid #654321;
-    }
-
-    #boss-dialog {
-      position: absolute;
-      top: 30px; right: 15px;
-      background: rgba(220,20,60,0.95);
-      color: #fff;
-      padding: 14px;
-      border-radius: 15px;
-      font-size: 15px;
-      font-weight: bold;
-      max-width: 260px;
-      display: none;
-      text-shadow: 2px 2px 4px #000;
-      animation: bossShake 0.5s infinite;
-    }
-    @keyframes bossShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
-
-    canvas { display: block; image-rendering: pixelated; }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chín Vạn Mẫu - Mini</title>
+<style>
+  body {
+    background: #222;
+    color: #fff;
+    font-family: monospace;
+    text-align: center;
+    user-select: none;
+  }
+  #game {
+    margin: 20px auto;
+    background: #333;
+    display: grid;
+    grid-template-columns: repeat(10, 32px);
+    grid-template-rows: repeat(10, 32px);
+    gap: 2px;
+    width: max-content;
+  }
+  .tile {
+    width: 32px;
+    height: 32px;
+    background: #444;
+    cursor: pointer;
+  }
+  .owned { background: #2ecc71; } /* ô đã chiếm */
+  .castle { background: #f1c40f; } /* nhà chính */
+  #stats {
+    margin-top: 10px;
+    font-size: 16px;
+  }
+  button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #3498db;
+    border: none;
+    color: white;
+    font-size: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover {
+    background: #2980b9;
+  }
+</style>
 </head>
 <body>
-
-<!-- iOS KICK SCREEN -->
-<div id="ios-kick">
-  <h1>iOS KHÔNG ĐƯỢC HỖ TRỢ</h1>
-  <p>Game chỉ dành cho <b>ANDROID</b></p>
-  <p>Vui lòng dùng điện thoại Android để chơi!</p>
-  <button onclick="window.location.href='https://www.google.com/android'">Tìm hiểu Android</button>
+<h2>🏰 Chín Vạn Mẫu - Mini</h2>
+<div id="stats">
+  💰 Vàng: <span id="gold">50</span> |
+  🌲 Gỗ: <span id="wood">30</span> |
+  🪨 Đá: <span id="stone">30</span> |
+  🏡 Cấp nhà chính: <span id="level">1</span>
 </div>
 
-<!-- GAME -->
-<div id="game-container">
-  <div id="boss-dialog"></div>
-  
-  <div id="story">
-    <strong>HPTC: CHÀNG BÉO (ANDROID ONLY)</strong><br><br>
-    <b>30 MÀN + BOSS CUỐI</b><br>
-    <b>Phá tượng địch → THẮNG</b><br>
-    <b>Đào vàng: 100/con (max 15)</b><br>
-    <b>Quân: max 120</b><br><br>
-    <button onclick="startGame()">BẮT ĐẦU</button>
-  </div>
-
-  <div id="ui" style="display:none;">
-    <div id="stats">
-      <div id="wave-display">Màn: <span id="wave-number">1</span>/30</div>
-      <div id="gold">Vàng: <span id="gold-amount">500</span></div>
-      <div id="army-count">Quân: <span id="army-count-display">0</span>/120</div>
-      <div id="miners-count">Đào: <span id="miners-count-display">0</span>/15</div>
-    </div>
-    <div class="btn-row">
-      <button class="btn-gold" onclick="spawnMiner()">Đào (100)</button>
-      <button class="btn-soldier" onclick="spawnUnit('soldier')">Kiếm (50)</button>
-      <button class="btn-archer" onclick="spawnUnit('archer')">Cung (80)</button>
-    </div>
-    <div class="btn-row">
-      <button class="btn-giant" onclick="spawnUnit('giant')">Cự (200)</button>
-    </div>
-  </div>
-
-  <div id="player-statue" class="statue"></div>
-  <div id="enemy-statue" class="statue"></div>
-  <div id="ground"></div>
-  <canvas id="game-canvas"></canvas>
-</div>
+<div id="game"></div>
+<button id="upgradeBtn">Nâng cấp nhà chính (50 vàng, 30 gỗ, 30 đá)</button>
 
 <script>
-  // === iOS DETECTION & KICK ===
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-  const iosKick = document.getElementById('ios-kick');
-  const gameContainer = document.getElementById('game-container');
+const gridSize = 10;
+const game = document.getElementById("game");
+const goldEl = document.getElementById("gold");
+const woodEl = document.getElementById("wood");
+const stoneEl = document.getElementById("stone");
+const levelEl = document.getElementById("level");
 
-  if (isIOS) {
-    iosKick.style.display = 'flex';
-    gameContainer.style.display = 'none';
-    // Ngăn mọi hành động
-    document.body.style.overflow = 'hidden';
-    document.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+let gold = 50, wood = 30, stone = 30, level = 1;
+let tiles = [];
+
+// tạo bản đồ
+for (let i = 0; i < gridSize * gridSize; i++) {
+  const tile = document.createElement("div");
+  tile.classList.add("tile");
+  tile.dataset.index = i;
+  game.appendChild(tile);
+  tiles.push(tile);
+}
+
+const center = Math.floor(gridSize * gridSize / 2 + gridSize / 2);
+tiles[center].classList.add("castle", "owned");
+
+// sản xuất tài nguyên theo thời gian
+setInterval(() => {
+  gold += 1 * level;
+  wood += 1 * level;
+  stone += 1 * level;
+  updateUI();
+}, 1000);
+
+function updateUI() {
+  goldEl.textContent = Math.floor(gold);
+  woodEl.textContent = Math.floor(wood);
+  stoneEl.textContent = Math.floor(stone);
+  levelEl.textContent = level;
+}
+
+game.addEventListener("click", e => {
+  const t = e.target;
+  if (!t.classList.contains("tile") || t.classList.contains("owned")) return;
+
+  if (gold >= 10 && wood >= 5 && stone >= 5) {
+    gold -= 10; wood -= 5; stone -= 5;
+    t.classList.add("owned");
+    updateUI();
   } else {
-    iosKick.style.display = 'none';
-    gameContainer.style.display = 'block';
-    // Fullscreen Android
-    if (screen.orientation && screen.orientation.lock) {
-      screen.orientation.lock('landscape').catch(() => {});
-    }
+    alert("Không đủ tài nguyên để chiếm ô này!");
   }
+});
 
-  // === CANVAS FULLSCREEN ===
-  const canvas = document.getElementById('game-canvas');
-  const ctx = canvas.getContext('2d');
-  function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
+document.getElementById("upgradeBtn").addEventListener("click", () => {
+  if (gold >= 50 && wood >= 30 && stone >= 30) {
+    gold -= 50; wood -= 30; stone -= 30;
+    level++;
+    updateUI();
+    alert("🏠 Nhà chính đã lên cấp " + level + "!");
+  } else {
+    alert("Thiếu tài nguyên để nâng cấp!");
   }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
+});
 
-  // === GAME STATE ===
-  let gold = 500, wave = 1, maxWaves = 30, gameActive = false;
-  const MAX_ARMY = 120, MAX_MINERS = 15;
-  let units = [], enemies = [], miners = [], projectiles = [];
-  let playerStatueHP = 5000, enemyStatueHP = 8000;
-  const bossDialog = document.getElementById('boss-dialog');
-
-  const displays = {
-    gold: document.getElementById('gold-amount'),
-    army: document.getElementById('army-count-display'),
-    miners: document.getElementById('miners-count-display'),
-    wave: document.getElementById('wave-number')
-  };
-
-  function startGame() {
-    document.getElementById('story').style.display = 'none';
-    document.getElementById('ui').style.display = 'block';
-    gameActive = true;
-    spawnWave();
-    setInterval(spawnWave, 20000);
-    setInterval(updateDisplays, 100);
-  }
-
-  function updateDisplays() {
-    displays.gold.textContent = gold;
-    displays.army.textContent = units.length;
-    displays.miners.textContent = miners.length;
-    displays.wave.textContent = wave;
-  }
-
-  // === SPAWN MINER / UNIT ===
-  function spawnMiner() {
-    if (miners.length >= MAX_MINERS || gold < 100) return;
-    gold -= 100;
-    miners.push(new Miner(100 + miners.length * 60));
-    disableButtons();
-  }
-
-  function spawnUnit(type) {
-    if (units.length >= MAX_ARMY || gold < getUnitCost(type)) return;
-    gold -= getUnitCost(type);
-    units.push(new Unit(70, type, 'hptc'));
-    disableButtons();
-  }
-
-  function getUnitCost(type) { return { soldier: 50, archer: 80, giant: 200 }[type]; }
-
-  function disableButtons() {
-    const btns = document.querySelectorAll('#ui button');
-    btns.forEach(b => b.disabled = true);
-    setTimeout(() => btns.forEach(b => b.disabled = false), 400);
-  }
-
-  // === MINER CLASS ===
-  class Miner {
-    constructor(x) { this.x = x; this.y = canvas.height - 165; this.element = this.createElement(); this.miningCooldown = 0; }
-    createElement() {
-      const div = document.createElement('div');
-      div.className = 'stickman miner';
-      div.style.left = this.x + 'px';
-      gameContainer.appendChild(div);
-      return div;
-    }
-    update() {
-      this.element.classList.add('mining');
-      if (this.miningCooldown <= 0) { gold += 35; this.miningCooldown = 180; }
-      this.miningCooldown--;
-    }
-  }
-
-  // === UNIT, BOSS, STATUE, PROJECTILE, WAVE... (giữ nguyên như trước) ===
-  // ... (code giống phiên bản trước, chỉ thay đổi vị trí spawn nhỏ)
-
-  // === GAME LOOP ===
-  function gameLoop() {
-    if (!gameActive || isIOS) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    projectiles.forEach(p => { p.update(); p.draw(); });
-    [...units, ...enemies].forEach(u => { if (!u.dead && u.hp > 0) u.update(); });
-    miners.forEach(m => m.update());
-    units = units.filter(u => !u.dead && u.hp > 0);
-    enemies = enemies.filter(e => !e.dead && e.hp > 0);
-    requestAnimationFrame(gameLoop);
-  }
-
-  // START
-  if (!isIOS) {
-    resizeCanvas();
-    updateDisplays();
-    gameLoop();
-  }
+updateUI();
 </script>
-
 </body>
 </html>
