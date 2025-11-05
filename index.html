@@ -1,128 +1,316 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Chín Vạn Mẫu - Mini</title>
-<style>
-  body {
-    background: #222;
-    color: #fff;
-    font-family: monospace;
-    text-align: center;
-    user-select: none;
-  }
-  #game {
-    margin: 20px auto;
-    background: #333;
-    display: grid;
-    grid-template-columns: repeat(10, 32px);
-    grid-template-rows: repeat(10, 32px);
-    gap: 2px;
-    width: max-content;
-  }
-  .tile {
-    width: 32px;
-    height: 32px;
-    background: #444;
-    cursor: pointer;
-  }
-  .owned { background: #2ecc71; } /* ô đã chiếm */
-  .castle { background: #f1c40f; } /* nhà chính */
-  #stats {
-    margin-top: 10px;
-    font-size: 16px;
-  }
-  button {
-    margin-top: 10px;
-    padding: 8px 12px;
-    background: #3498db;
-    border: none;
-    color: white;
-    font-size: 14px;
-    border-radius: 6px;
-    cursor: pointer;
-  }
-  button:hover {
-    background: #2980b9;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Blocks Blast</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #111;
+      font-family: Arial, sans-serif;
+      user-select: none;
+    }
+    #game-container {
+      position: relative;
+      width: 300px;
+      height: 600px;
+      border: 4px solid #333;
+      background: #000;
+      overflow: hidden;
+    }
+    canvas {
+      background: #111;
+      display: block;
+    }
+    #score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-size: 20px;
+      font-weight: bold;
+    }
+    #game-over {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: red;
+      font-size: 36px;
+      font-weight: bold;
+      display: none;
+      text-align: center;
+    }
+    #restart-btn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-<h2>🏰 Chín Vạn Mẫu - Mini</h2>
-<div id="stats">
-  💰 Vàng: <span id="gold">50</span> |
-  🌲 Gỗ: <span id="wood">30</span> |
-  🪨 Đá: <span id="stone">30</span> |
-  🏡 Cấp nhà chính: <span id="level">1</span>
-</div>
+  <div id="game-container">
+    <canvas id="game-canvas" width="300" height="600"></canvas>
+    <div id="score">Điểm: 0</div>
+    <div id="game-over">
+      <div>Game Over!</div>
+      <button id="restart-btn">Chơi lại</button>
+    </div>
+  </div>
 
-<div id="game"></div>
-<button id="upgradeBtn">Nâng cấp nhà chính (50 vàng, 30 gỗ, 30 đá)</button>
+  <script>
+    const canvas = document.getElementById('game-canvas');
+    const ctx = canvas.getContext('2d');
+    const scoreElement = document.getElementById('score');
+    const gameOverScreen = document.getElementById('game-over');
+    const restartBtn = document.getElementById('restart-btn');
 
-<script>
-const gridSize = 10;
-const game = document.getElementById("game");
-const goldEl = document.getElementById("gold");
-const woodEl = document.getElementById("wood");
-const stoneEl = document.getElementById("stone");
-const levelEl = document.getElementById("level");
+    const GRID_SIZE = 30;
+    const COLS = canvas.width / GRID_SIZE;
+    const ROWS = canvas.height / GRID_SIZE;
 
-let gold = 50, wood = 30, stone = 30, level = 1;
-let tiles = [];
+    const COLORS = ['#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#FF00FF', '#00FFFF'];
 
-// tạo bản đồ
-for (let i = 0; i < gridSize * gridSize; i++) {
-  const tile = document.createElement("div");
-  tile.classList.add("tile");
-  tile.dataset.index = i;
-  game.appendChild(tile);
-  tiles.push(tile);
-}
+    let board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+    let score = 0;
+    let gameOver = false;
+    let currentPiece = null;
+    let dropCounter = 0;
+    let dropInterval = 1000; // ms
+    let lastTime = 0;
 
-const center = Math.floor(gridSize * gridSize / 2 + gridSize / 2);
-tiles[center].classList.add("castle", "owned");
+    // Tạo khối ngẫu nhiên
+    function createPiece() {
+      const shapes = [
+        [[1]], // 1x1
+        [[1,1]], // 2x1
+        [[1,1,1]], // 3x1
+        [[1,1],[1,1]], // 2x2
+        [[1,0,0],[1,1,1]], // L shape
+        [[0,0,1],[1,1,1]], // J shape
+      ];
+      const shape = shapes[Math.floor(Math.random() * shapes.length)];
+      const color = COLORS[Math.floor(Math.random() * COLORS.length)];
+      return { shape, color, x: Math.floor(COLS / 2 - shape[0].length / 2), y: 0 };
+    }
 
-// sản xuất tài nguyên theo thời gian
-setInterval(() => {
-  gold += 1 * level;
-  wood += 1 * level;
-  stone += 1 * level;
-  updateUI();
-}, 1000);
+    // Vẽ khối
+    function drawPiece(piece, offsetX = 0, offsetY = 0) {
+      piece.shape.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value) {
+            ctx.fillStyle = piece.color;
+            ctx.fillRect(
+              (piece.x + x + offsetX) * GRID_SIZE,
+              (piece.y + y + offsetY) * GRID_SIZE,
+              GRID_SIZE - 1,
+              GRID_SIZE - 1
+            );
+          }
+        });
+      });
+    }
 
-function updateUI() {
-  goldEl.textContent = Math.floor(gold);
-  woodEl.textContent = Math.floor(wood);
-  stoneEl.textContent = Math.floor(stone);
-  levelEl.textContent = level;
-}
+    // Vẽ toàn bộ bảng
+    function drawBoard() {
+      board.forEach((row, y) => {
+        row.forEach((cell, x) => {
+          if (cell) {
+            ctx.fillStyle = cell;
+            ctx.fillRect(x * GRID_SIZE, y * GRID_SIZE, GRID_SIZE - 1, GRID_SIZE - 1);
+          }
+        });
+      });
+    }
 
-game.addEventListener("click", e => {
-  const t = e.target;
-  if (!t.classList.contains("tile") || t.classList.contains("owned")) return;
+    // Kiểm tra va chạm
+    function collide(piece, board, offsetX = 0, offsetY = 0) {
+      return piece.shape.some((row, y) =>
+        row.some((value, x) => {
+          if (!value) return false;
+          const newX = piece.x + x + offsetX;
+          const newY = piece.y + y + offsetY;
+          return (
+            newX < 0 ||
+            newX >= COLS ||
+            newY >= ROWS ||
+            (newY >= 0 && board[newY][newX])
+          );
+        })
+      );
+    }
 
-  if (gold >= 10 && wood >= 5 && stone >= 5) {
-    gold -= 10; wood -= 5; stone -= 5;
-    t.classList.add("owned");
-    updateUI();
-  } else {
-    alert("Không đủ tài nguyên để chiếm ô này!");
-  }
-});
+    // Gộp khối vào bảng
+    function merge(piece) {
+      piece.shape.forEach((row, y) => {
+        row.forEach((value, x) => {
+          if (value) {
+            board[piece.y + y][piece.x + x] = piece.color;
+          }
+        });
+      });
+      checkMatches();
+      currentPiece = createPiece();
+      if (collide(currentPiece, board)) {
+        gameOver = true;
+        gameOverScreen.style.display = 'block';
+      }
+    }
 
-document.getElementById("upgradeBtn").addEventListener("click", () => {
-  if (gold >= 50 && wood >= 30 && stone >= 30) {
-    gold -= 50; wood -= 30; stone -= 30;
-    level++;
-    updateUI();
-    alert("🏠 Nhà chính đã lên cấp " + level + "!");
-  } else {
-    alert("Thiếu tài nguyên để nâng cấp!");
-  }
-});
+    // Tìm và xóa các khối cùng màu (3+ liên tiếp ngang/dọc)
+    function checkMatches() {
+      let changed = true;
+      let points = 0;
+      while (changed) {
+        changed = false;
+        const toRemove = new Set();
 
-updateUI();
-</script>
+        // Kiểm tra hàng ngang
+        for (let y = 0; y < ROWS; y++) {
+          for (let x = 0; x < COLS - 2; x++) {
+            const color = board[y][x];
+            if (color && board[y][x + 1] === color && board[y][x + 2] === color) {
+              let len = 3;
+              while (x + len < COLS && board[y][x + len] === color) len++;
+              for (let i = 0; i < len; i++) {
+                toRemove.add(`${y}-${x + i}`);
+              }
+              changed = true;
+              x += len - 1;
+            }
+          }
+        }
+
+        // Kiểm tra hàng dọc
+        for (let x = 0; x < COLS; x++) {
+          for (let y = 0; y < ROWS - 2; y++) {
+            const color = board[y][x];
+            if (color && board[y + 1][x] === color && board[y + 2][x] === color) {
+              let len = 3;
+              while (y + len < ROWS && board[y + len][x] === color) len++;
+              for (let i = 0; i < len; i++) {
+                toRemove.add(`${y + i}-${x}`);
+              }
+              changed = true;
+              y += len - 1;
+            }
+          }
+        }
+
+        // Xóa khối
+        if (toRemove.size > 0) {
+          toRemove.forEach(pos => {
+            const [y, x] = pos.split('-').map(Number);
+            board[y][x] = null;
+          });
+          points += toRemove.size * 10;
+          dropBlocks();
+        }
+      }
+      score += points;
+      scoreElement.textContent = `Điểm: ${score}`;
+    }
+
+    // Rơi khối xuống sau khi xóa
+    function dropBlocks() {
+      for (let x = 0; x < COLS; x++) {
+        let col = board.map(row => row[x]).filter(cell => cell !== null);
+        let empty = ROWS - col.length;
+        for (let y = ROWS - 1; y >= 0; y--) {
+          board[y][x] = y >= empty ? col[y - empty] : null;
+        }
+      }
+    }
+
+    // Xoay khối
+    function rotate(piece) {
+      const rotated = piece.shape[0].map((_, i) =>
+        piece.shape.map(row => row[i]).reverse()
+      );
+      const previous = piece.shape;
+      piece.shape = rotated;
+      if (collide(piece, board)) {
+        piece.shape = previous;
+      }
+    }
+
+    // Cập nhật game
+    function update(time = 0) {
+      if (gameOver) return;
+
+      const deltaTime = time - lastTime;
+      lastTime = time;
+
+      dropCounter += deltaTime;
+      if (dropCounter > dropInterval) {
+        currentPiece.y++;
+        if (collide(currentPiece, board)) {
+          currentPiece.y--;
+          merge(currentPiece);
+        }
+        dropCounter = 0;
+      }
+
+      draw();
+      requestAnimationFrame(update);
+    }
+
+    // Vẽ màn hình
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBoard();
+      drawPiece(currentPiece);
+    }
+
+    // Điều khiển
+    document.addEventListener('keydown', e => {
+      if (gameOver) return;
+
+      if (e.key === 'ArrowLeft') {
+        currentPiece.x--;
+        if (collide(currentPiece, board)) currentPiece.x++;
+      }
+      if (e.key === 'ArrowRight') {
+        currentPiece.x++;
+        if (collide(currentPiece, board)) currentPiece.x--;
+      }
+      if (e.key === 'ArrowDown') {
+        currentPiece.y++;
+        if (collide(currentPiece, board)) {
+          currentPiece.y--;
+          merge(currentPiece);
+        }
+      }
+      if (e.key === 'ArrowUp') {
+        rotate(currentPiece);
+      }
+    });
+
+    // Bắt đầu lại
+    restartBtn.addEventListener('click', () => {
+      board = Array.from({ length: ROWS }, () => Array(COLS).fill(null));
+      score = 0;
+      scoreElement.textContent = `Điểm: ${score}`;
+      gameOver = false;
+      gameOverScreen.style.display = 'none';
+      currentPiece = createPiece();
+      update();
+    });
+
+    // Khởi động game
+    currentPiece = createPiece();
+    update();
+  </script>
 </body>
 </html>
