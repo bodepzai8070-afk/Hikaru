@@ -1,4 +1,3 @@
--- // Yoru Aimbot + ESP Mobile Version
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -9,110 +8,162 @@ local AimbotEnabled = true
 local HeadAimOnly = true
 local ESPEnabled = true
 local AimKey = Enum.UserInputType.MouseButton2
-local FOV = 180
+local FOV = 200
 local Smoothness = 0.55
 
 local ESPObjects = {}
 
-print("✅ Yoru Mobile Aimbot Loaded!")
-print("Nhấn Y hoặc RightShift để Toggle Menu (trong console)")
+print("🔥 YORU VN MENU ĐÃ HIỆN - Mobile Optimized")
 
--- ==================== ESP ====================
-local function CreateESP(player)
-    if ESPObjects[player] then return end
-    local Box = Drawing.new("Square")
-    Box.Thickness = 2
-    Box.Filled = false
-    Box.Transparency = 1
-    Box.Color = Color3.fromRGB(255, 0, 0)
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "YoruVN_Menu"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
+
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 290, 0, 420)
+MainFrame.Position = UDim2.new(0.5, -145, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(170, 0, 0)
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = true
+MainFrame.Parent = ScreenGui
+
+local TopBar = Instance.new("Frame")
+TopBar.Size = UDim2.new(1, 0, 0, 55)
+TopBar.BackgroundColor3 = Color3.fromRGB(120, 0, 0)
+TopBar.Parent = MainFrame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 1, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "YORU VN 🇻🇳"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.Parent = TopBar
+
+local Status = Instance.new("TextLabel")
+Status.Size = UDim2.new(1, 0, 0, 35)
+Status.Position = UDim2.new(0, 0, 0, 55)
+Status.BackgroundColor3 = Color3.fromRGB(130, 0, 0)
+Status.Text = "UNIVERSAL AIMBOT + ESP"
+Status.TextColor3 = Color3.fromRGB(255, 220, 0)
+Status.TextScaled = true
+Status.Parent = MainFrame
+
+local function CreateBtn(text, yPos, callback)
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0.9, 0, 0, 50)
+    btn.Position = UDim2.new(0.05, 0, 0, yPos)
+    btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+    btn.Text = text
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.TextScaled = true
+    btn.Font = Enum.Font.GothamSemibold
+    btn.Parent = MainFrame
+    btn.MouseButton1Click:Connect(callback)
+    return btn
+end
+
+local AimBtn = CreateBtn("Aimbot: ✅ ON", 100, function()
+    AimbotEnabled = not AimbotEnabled
+    AimBtn.Text = "Aimbot: " .. (AimbotEnabled and "✅ ON" or "❌ OFF")
+end)
+
+local HeadBtn = CreateBtn("Nhắm Đầu: ✅ ON", 160, function()
+    HeadAimOnly = not HeadAimOnly
+    HeadBtn.Text = "Nhắm Đầu: " .. (HeadAimOnly and "✅ ON" or "❌ BODY")
+end)
+
+local ESPBtn = CreateBtn("ESP Địch: ✅ ON", 220, function()
+    ESPEnabled = not ESPEnabled
+    ESPBtn.Text = "ESP Địch: " .. (ESPEnabled and "✅ ON" or "❌ OFF")
+end)
+
+local CloseBtn = CreateBtn("ĐÓNG MENU", 290, function()
+    MainFrame.Visible = false
+end)
+
+local function CreateESP(plr)
+    if ESPObjects[plr] then return end
+    local box = Drawing.new("Square")
+    box.Thickness = 2.5
+    box.Filled = false
+    box.Color = Color3.fromRGB(255, 40, 40)
     
-    local Name = Drawing.new("Text")
-    Name.Size = 15
-    Name.Color = Color3.fromRGB(255, 255, 255)
-    Name.Outline = true
-    Name.Center = true
+    local name = Drawing.new("Text")
+    name.Size = 16
+    name.Color = Color3.fromRGB(255, 255, 80)
+    name.Outline = true
+    name.Center = true
     
-    ESPObjects[player] = {Box = Box, Name = Name}
+    ESPObjects[plr] = {Box = box, Name = name}
 end
 
 local function UpdateESP()
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player \~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            if not ESPObjects[player] then CreateESP(player) end
-            local obj = ESPObjects[player]
-            local Root = player.Character.HumanoidRootPart
-            local Pos, OnScreen = Camera:WorldToViewportPoint(Root.Position)
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            if not ESPObjects[plr] then CreateESP(plr) end
+            local data = ESPObjects[plr]
+            local root = plr.Character.HumanoidRootPart
+            local pos, onScreen = Camera:WorldToViewportPoint(root.Position)
             
-            if OnScreen and ESPEnabled then
-                local Top = Camera:WorldToViewportPoint(Root.Position + Vector3.new(0, 3, 0))
-                local Bottom = Camera:WorldToViewportPoint(Root.Position - Vector3.new(0, 3, 0))
-                local Size = Vector2.new((Top.X - Bottom.X) * 1.8, Top.Y - Bottom.Y)
+            if onScreen and ESPEnabled then
+                local height = (Camera:WorldToViewportPoint(root.Position + Vector3.new(0,3,0)).Y - Camera:WorldToViewportPoint(root.Position - Vector3.new(0,3,0)).Y) * 1.7
+                data.Box.Size = Vector2.new(height * 1.5, height * 3.2)
+                data.Box.Position = Vector2.new(pos.X - data.Box.Size.X/2, pos.Y - data.Box.Size.Y/2)
+                data.Box.Visible = true
                 
-                obj.Box.Size = Size
-                obj.Box.Position = Vector2.new(Pos.X - Size.X/2, Pos.Y - Size.Y/2 + 10)
-                obj.Box.Visible = true
+                local dist = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and 
+                            math.floor((LocalPlayer.Character.HumanoidRootPart.Position - root.Position).Magnitude) or 0
                 
-                obj.Name.Text = player.Name .. " [" .. math.floor((LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") and (LocalPlayer.Character.HumanoidRootPart.Position - Root.Position).Magnitude) or 999) .. "m]"
-                obj.Name.Position = Vector2.new(Pos.X, Pos.Y - Size.Y/2 - 10)
-                obj.Name.Visible = true
+                data.Name.Text = plr.Name .. " ["..dist.."m]"
+                data.Name.Position = Vector2.new(pos.X, pos.Y - data.Box.Size.Y/2 - 20)
+                data.Name.Visible = true
             else
-                obj.Box.Visible = false
-                obj.Name.Visible = false
+                data.Box.Visible = false
+                data.Name.Visible = false
             end
         end
     end
 end
 
--- ==================== AIMBOT ====================
 RunService.RenderStepped:Connect(function()
     UpdateESP()
     
     if not AimbotEnabled then return end
     
-    local Closest = nil
-    local Shortest = FOV
+    local closest = nil
+    local shortest = FOV
     
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player \~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") and player.Character.Humanoid.Health > 0 then
-            local Head = player.Character.Head
-            local Pos, OnScreen = Camera:WorldToViewportPoint(Head.Position)
-            
-            if OnScreen then
-                local Dist = (Vector2.new(Pos.X, Pos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
-                if Dist < Shortest then
-                    Shortest = Dist
-                    Closest = player
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr \~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+            local hum = plr.Character:FindFirstChild("Humanoid")
+            if hum and hum.Health > 0 then
+                local hpos, vis = Camera:WorldToViewportPoint(plr.Character.Head.Position)
+                if vis then
+                    local d = (Vector2.new(hpos.X, hpos.Y) - Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)).Magnitude
+                    if d < shortest then
+                        shortest = d
+                        closest = plr
+                    end
                 end
             end
         end
     end
     
-    if Closest and UserInputService:IsMouseButtonPressed(AimKey) then
-        local TargetPart = HeadAimOnly and Closest.Character.Head or Closest.Character.HumanoidRootPart
-        local AimPos = Camera:WorldToViewportPoint(TargetPart.Position)
-        
-        local MouseLoc = UserInputService:GetMouseLocation()
-        mousemoverel((AimPos.X - MouseLoc.X) * Smoothness, (AimPos.Y - MouseLoc.Y) * Smoothness)
+    if closest and UserInputService:IsMouseButtonPressed(AimKey) then
+        local target = HeadAimOnly and closest.Character.Head or closest.Character.HumanoidRootPart
+        local aimpos = Camera:WorldToViewportPoint(target.Position + Vector3.new(0,0.1,0))
+        local mouse = UserInputService:GetMouseLocation()
+        mousemoverel((aimpos.X - mouse.X) * Smoothness, (aimpos.Y - mouse.Y) * Smoothness)
     end
 end)
 
--- ==================== TOGGLE BẰNG PHÍM ====================
-UserInputService.InputBegan:Connect(function(input, gp)
-    if gp then return end
-    if input.KeyCode == Enum.KeyCode.Y or input.KeyCode == Enum.KeyCode.RightShift then
-        AimbotEnabled = not AimbotEnabled
-        print("Aimbot:", AimbotEnabled and "✅ BẬT" or "❌ TẮT")
-    elseif input.KeyCode == Enum.KeyCode.H then
-        HeadAimOnly = not HeadAimOnly
-        print("Nhắm Đầu:", HeadAimOnly and "✅ ON" or "❌ OFF")
-    elseif input.KeyCode == Enum.KeyCode.E then
-        ESPEnabled = not ESPEnabled
-        print("ESP:", ESPEnabled and "✅ BẬT" or "❌ TẮT")
+UserInputService.InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Y then
+        MainFrame.Visible = not MainFrame.Visible
     end
 end)
 
-print("=== HƯỚNG DẪN MOBILE ===")
-print("Y / RightShift : Bật/Tắt Aimbot")
-print("H : Bật/Tắt Nhắm Đầu")
-print("E : Bật/Tắt ESP")
-print("Giữ Chuột Phải để Auto Aim")
+print("✅ Menu đã hiện ngay! Nhấn Y để mở/đóng lại.")
