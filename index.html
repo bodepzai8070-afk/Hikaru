@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>KiradaReal Game Booster</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E14;
+    --surface:#12161F;
+    --surface-raised:#181E28;
+    --border:#232B38;
+    --text:#F2F5F8;
+    --text-dim:#8A94A6;
+    --text-faint:#525C6B;
+    --accent:#5FD1FF;
+    --accent-dim:#2E6B85;
+    --success:#4ADE80;
+    --warning:#FFB84D;
+    --danger:#FF5C5C;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+  .app{
+    width:100%;
+    max-width:430px;
+    min-height:100vh;
+    background:var(--bg);
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(95,209,255,0.06), transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(95,209,255,0.04), transparent 40%);
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    padding:22px 20px 14px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .brand-mark{
+    width:34px;height:34px;
+    border-radius:9px;
+    background:linear-gradient(145deg, var(--accent), var(--accent-dim));
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Rajdhani',sans-serif;
+    font-weight:700;
+    font-size:16px;
+    color:#04121A;
+    flex-shrink:0;
+  }
+  .brand-text h1{
+    font-family:'Rajdhani',sans-serif;
+    font-size:15px;
+    font-weight:700;
+    letter-spacing:0.06em;
+    margin:0;
+    line-height:1.1;
+  }
+  .brand-text p{
+    margin:0;
+    font-size:10.5px;
+    color:var(--text-dim);
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+  }
+  .back-btn{
+    background:var(--surface);
+    border:1px solid var(--border);
+    color:var(--text-dim);
+    width:34px;height:34px;
+    border-radius:9px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    font-size:16px;
+  }
+  .back-btn:active{background:var(--surface-raised);}
+
+  /* ---------- Screen container ---------- */
+  .screen{
+    padding:6px 20px 100px;
+    flex:1;
+    animation:fadeIn 0.18s ease;
+  }
+  @keyframes fadeIn{from{opacity:0; transform:translateY(4px);} to{opacity:1; transform:translateY(0);}}
+  .screen-title{
+    font-family:'Rajdhani',sans-serif;
+    font-size:22px;
+    font-weight:700;
+    letter-spacing:0.02em;
+    margin:6px 0 4px;
+  }
+  .screen-sub{
+    font-size:12.5px;
+    color:var(--text-dim);
+    margin:0 0 18px;
+    line-height:1.5;
+  }
+
+  /* ---------- Live/unavailable badge (signature element) ---------- */
+  .measure-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9.5px;
+    letter-spacing:0.04em;
+    text-transform:uppercase;
+    padding:3px 8px 3px 6px;
+    border-radius:20px;
+  }
+  .measure-badge.live{
+    background:rgba(74,222,128,0.1);
+    color:var(--success);
+    border:1px solid rgba(74,222,128,0.25);
+  }
+  .measure-badge.live .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--success);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  .measure-badge.unavailable{
+    background:transparent;
+    color:var(--text-faint);
+    border:1px dashed var(--text-faint);
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1; box-shadow:0 0 0 0 rgba(74,222,128,0.5);}
+    50%{opacity:0.6; box-shadow:0 0 0 4px rgba(74,222,128,0);}
+  }
+
+  /* ---------- Card ---------- */
+  .card{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:14px;
+  }
+  .card-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .card-head h3{
+    font-family:'Rajdhani',sans-serif;
+    font-size:14.5px;
+    font-weight:600;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-dim);
+    margin:0;
+  }
+
+  .stat-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    color:var(--text-dim);
+    padding:6px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .stat-row:last-child{border-bottom:none;}
+  .stat-row .val{color:var(--text); font-weight:500;}
+  .stat-row .val.unavailable{color:var(--text-faint); font-style:italic;}
+
+  .bignum{
+    font-family:'JetBrains Mono',monospace;
+    font-size:34px;
+    font-weight:500;
+    color:var(--text);
+    line-height:1;
+  }
+  .bignum .unit{font-size:15px; color:var(--text-dim); margin-left:4px;}
+  .bignum.unavailable{color:var(--text-faint); font-size:15px; font-style:italic; font-family:'Inter',sans-serif;}
+
+  .bar-track{
+    height:8px;
+    border-radius:5px;
+    background:var(--surface-raised);
+    overflow:hidden;
+    margin-top:10px;
+  }
+  .bar-fill{
+    height:100%;
+    border-radius:5px;
+    background:linear-gradient(90deg, var(--accent-dim), var(--accent));
+    transition:width 0.4s ease;
+  }
+
+  .notice{
+    font-size:11.5px;
+    color:var(--text-faint);
+    border-left:2px dashed var(--text-faint);
+    padding:8px 10px;
+    margin-top:12px;
+    line-height:1.5;
+    font-style:italic;
+  }
+  .notice.warn{
+    color:var(--warning);
+    border-left-color:var(--warning);
+    font-style:normal;
+    background:rgba(255,184,77,0.06);
+    border-radius:6px;
+  }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    width:100%;
+    padding:14px;
+    border-radius:11px;
+    border:none;
+    font-family:'Rajdhani',sans-serif;
+    font-weight:700;
+    font-size:15px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:transform 0.08s ease, opacity 0.15s ease;
+  }
+  .btn:active{transform:scale(0.98);}
+  .btn-primary{background:var(--accent); color:#031820;}
+  .btn-primary:disabled{background:var(--surface-raised); color:var(--text-faint); cursor:default;}
+  .btn-secondary{background:var(--surface-raised); color:var(--text); border:1px solid var(--border);}
+  .btn-outline{background:transparent; color:var(--accent); border:1px solid var(--accent-dim);}
+
+  .toggle-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:12px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .toggle-row:last-child{border-bottom:none;}
+  .toggle-label{font-size:13.5px;}
+  .toggle-label small{display:block; color:var(--text-faint); font-size:10.5px; margin-top:2px; font-weight:400;}
+  .switch{
+    width:42px;height:24px;
+    border-radius:20px;
+    background:var(--surface-raised);
+    border:1px solid var(--border);
+    position:relative;
+    cursor:pointer;
+    flex-shrink:0;
+  }
+  .switch.on{background:var(--accent-dim); border-color:var(--accent);}
+  .switch .knob{
+    position:absolute;
+    top:2px; left:2px;
+    width:18px;height:18px;
+    border-radius:50%;
+    background:var(--text-faint);
+    transition:transform 0.18s ease, background 0.18s ease;
+  }
+  .switch.on .knob{transform:translateX(18px); background:var(--accent);}
+
+  /* ---------- Main menu grid ---------- */
+  .menu-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:10px;
+  }
+  .menu-tile{
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 14px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, background 0.15s ease;
+  }
+  .menu-tile:active{background:var(--surface-raised);}
+  .menu-tile.wide{grid-column:1 / -1;}
+  .menu-tile .icon{font-size:22px;}
+  .menu-tile .label{
+    font-family:'Rajdhani',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    letter-spacing:0.03em;
+  }
+  .menu-tile .meta{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10.5px;
+    color:var(--text-dim);
+  }
+  .menu-tile.boost{
+    background:linear-gradient(160deg, rgba(95,209,255,0.14), rgba(95,209,255,0.02));
+    border-color:var(--accent-dim);
+  }
+
+  /* ---------- Game list ---------- */
+  .game-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:13px 4px;
+    border-bottom:1px solid var(--border);
+    cursor:pointer;
+  }
+  .game-row:last-child{border-bottom:none;}
+  .game-row .name{font-size:13.5px; font-weight:500;}
+  .game-row .chev{color:var(--text-faint); font-size:13px;}
+  .search-input{
+    width:100%;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:11px 14px;
+    color:var(--text);
+    font-size:13px;
+    margin-bottom:14px;
+    font-family:'Inter',sans-serif;
+  }
+  .search-input::placeholder{color:var(--text-faint);}
+  .search-input:focus{outline:none; border-color:var(--accent-dim);}
+
+  /* ---------- Bottom nav ---------- */
+  .bottom-nav{
+    position:fixed;
+    bottom:0;
+    width:100%;
+    max-width:430px;
+    background:rgba(18,22,31,0.92);
+    backdrop-filter:blur(10px);
+    border-top:1px solid var(--border);
+    display:flex;
+    padding:8px 4px calc(8px + env(safe-area-inset-bottom));
+  }
+  .nav-item{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:3px;
+    padding:6px 0;
+    color:var(--text-faint);
+    font-size:9.5px;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    background:none;
+    border:none;
+    font-family:'Inter',sans-serif;
+  }
+  .nav-item .nav-icon{font-size:17px;}
+  .nav-item.active{color:var(--accent);}
+
+  .status-dot{width:8px;height:8px;border-radius:50%; display:inline-block; margin-right:6px;}
+  .status-dot.on{background:var(--success); box-shadow:0 0 6px rgba(74,222,128,0.6);}
+  .status-dot.off{background:var(--text-faint);}
+
+  .footer-note{
+    text-align:center;
+    font-size:10px;
+    color:var(--text-faint);
+    padding:18px 10px 4px;
+    line-height:1.6;
+  }
+
+  .perm-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:13px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .perm-row:last-child{border-bottom:none;}
+  .perm-name{font-size:13px;}
+  .perm-status{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    padding:3px 9px;
+    border-radius:20px;
+  }
+  .perm-status.granted{color:var(--success); background:rgba(74,222,128,0.1);}
+  .perm-status.denied{color:var(--warning); background:rgba(255,184,77,0.1);}
+  .perm-open{
+    font-size:11px;
+    color:var(--accent);
+    background:none;
+    border:1px solid var(--accent-dim);
+    border-radius:8px;
+    padding:5px 10px;
+    margin-top:6px;
+    cursor:pointer;
+    font-family:'Inter',sans-serif;
+  }
+
+  ::selection{background:var(--accent-dim);}
+</style>
+</head>
+<body>
+<div class="app" id="app"></div>
+
+<script>
+/* =========================================================
+   KIRADAREAL GAME BOOSTER — interactive prototype
+   Honesty rule threaded through every screen: if a real
+   device/browser API is available, we read it live and mark
+   it LIVE. If not, we say so plainly — never invented numbers.
+   ========================================================= */
+
+const state = {
+  screen: 'menu',
+  selectedGame: null,
+  settings: {
+    autoGameMode: true,
+    notifBlock: true,
+    tempMonitor: true,
+    perfMonitor: true,
+    batterySaver: false,
+    lowPowerUI: true,
+    interval: 5,
+  },
+  safeMode: true,
+  gameModeOn: false,
+  boosting: false,
+  perms: {
+    notif: 'granted',
+    dnd: 'denied',
+    usage: 'denied',
+    battOpt: 'granted',
+    overlay: 'denied',
+  },
+  battery: { supported: false, level: null, charging: null },
+  memory: { supported: false, usedMB: null, limitMB: null },
+  fps: { value: null, running: false },
+};
+
+const GAMES = ['Minecraft','Free Fire','PUBG Mobile','Roblox','Genshin Impact','Liên Quân Mobile','Call of Duty Mobile'];
+
+function render(){
+  const app = document.getElementById('app');
+  app.innerHTML = topbar() + body() + bottomNav();
+  attachHandlers();
+}
+
+function topbar(){
+  const showBack = state.screen !== 'menu';
+  return `
+  <div class="topbar">
+    ${showBack ? `<button class="back-btn" data-nav="menu">‹</button>` : `
+      <div class="brand">
+        <div class="brand-mark">KR</div>
+        <div class="brand-text">
+          <h1>KIRADAREAL</h1>
+          <p>Game Booster</p>
+        </div>
+      </div>
+    `}
+    ${showBack ? `<div class="brand-text" style="text-align:right"><h1 style="font-size:13px">${screenTitleShort()}</h1></div>` : `<div class="measure-badge live"><span class="dot"></span>An toàn</div>`}
+  </div>`;
+}
+
+function screenTitleShort(){
+  const map = {ram:'RAM', temp:'Nhiệt độ', battery:'Pin', notif:'Thông báo', gamemode:'Game Mode', settings:'Cài đặt', perms:'Quyền', perf:'Hiệu năng', cleanup:'Dọn dẹp', gamedetail: state.selectedGame || ''};
+  return map[state.screen] || '';
+}
+
+function body(){
+  switch(state.screen){
+    case 'menu': return menuScreen();
+    case 'ram': return ramScreen();
+    case 'temp': return tempScreen();
+    case 'battery': return batteryScreen();
+    case 'notif': return notifScreen();
+    case 'gamemode': return gameModeScreen();
+    case 'gamedetail': return gameDetailScreen();
+    case 'settings': return settingsScreen();
+    case 'perms': return permsScreen();
+    case 'perf': return perfScreen();
+    case 'cleanup': return cleanupScreen();
+    default: return menuScreen();
+  }
+}
+
+/* ---------------- MENU ---------------- */
+function menuScreen(){
+  return `
+  <div class="screen">
+    <div class="screen-title">Trung tâm điều khiển</div>
+    <div class="screen-sub">Tối ưu trong phạm vi trình duyệt / Android cho phép — không giả lập kết quả.</div>
+    <div class="menu-grid">
+      <div class="menu-tile wide boost" data-nav="menu" data-action="boost">
+        <div class="icon">⚡</div>
+        <div class="label">BOOST GAME</div>
+        <div class="meta">${state.boosting ? 'Đang tối ưu…' : 'Chạm để kiểm tra & tối ưu'}</div>
+      </div>
+      <div class="menu-tile" data-nav="temp">
+        <div class="icon">🌡</div>
+        <div class="label">Nhiệt độ</div>
+        <div class="meta">${tempAvailable() ? 'Đang đo' : 'Không khả dụng'}</div>
+      </div>
+      <div class="menu-tile" data-nav="ram">
+        <div class="icon">🧠</div>
+        <div class="label">RAM</div>
+        <div class="meta">${state.memory.supported ? 'Đang đo (bộ nhớ JS)' : 'Không khả dụng'}</div>
+      </div>
+      <div class="menu-tile" data-nav="battery">
+        <div class="icon">🔋</div>
+        <div class="label">Pin</div>
+        <div class="meta">${state.battery.supported ? Math.round(state.battery.level*100)+'%' : 'Không khả dụng'}</div>
+      </div>
+      <div class="menu-tile" data-nav="notif">
+        <div class="icon">🔕</div>
+        <div class="label">Thông báo</div>
+        <div class="meta">${state.gameModeOn ? 'Đang hạn chế' : 'Bình thường'}</div>
+      </div>
+      <div class="menu-tile" data-nav="gamemode">
+        <div class="icon">🎮</div>
+        <div class="label">Game Mode</div>
+        <div class="meta">${state.selectedGame || 'Chưa chọn game'}</div>
+      </div>
+      <div class="menu-tile" data-nav="perf">
+        <div class="icon">📈</div>
+        <div class="label">Hiệu năng</div>
+        <div class="meta">Dashboard trực tiếp</div>
+      </div>
+      <div class="menu-tile" data-nav="settings">
+        <div class="icon">⚙</div>
+        <div class="label">Cài đặt</div>
+        <div class="meta">Interval, quyền, chế độ</div>
+      </div>
+    </div>
+    <div class="footer-note">Android không cho phép ứng dụng chạy trong trình duyệt đọc trực tiếp CPU, GPU hoặc FPS của game khác. Các mục trên hiển thị đúng những gì đo được, không nhiều hơn.</div>
+  </div>`;
+}
+
+/* ---------------- RAM ---------------- */
+function ramScreen(){
+  const m = state.memory;
+  const pct = m.supported ? Math.round((m.usedMB/m.limitMB)*100) : null;
+  return `
+  <div class="screen">
+    <div class="screen-title">RAM</div>
+    <div class="screen-sub">Trình duyệt không cấp quyền đọc tổng RAM thiết bị. Số liệu dưới đây là bộ nhớ JavaScript heap của chính trang này — dùng để minh hoạ cơ chế đo, không đại diện cho RAM hệ thống.</div>
+    <div class="card">
+      <div class="card-head">
+        <h3>Bộ nhớ JS Heap</h3>
+        ${m.supported ? liveBadge() : unavailBadge()}
+      </div>
+      ${m.supported ? `
+        <div class="bignum">${(m.usedMB).toFixed(1)}<span class="unit">MB / ${(m.limitMB).toFixed(0)} MB</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="stat-row"><span>Đã dùng</span><span class="val">${m.usedMB.toFixed(1)} MB</span></div>
+        <div class="stat-row"><span>Giới hạn heap</span><span class="val">${m.limitMB.toFixed(0)} MB</span></div>
+      ` : `
+        <div class="bignum unavailable">Không thể đọc RAM tổng của thiết bị trên trình duyệt này.</div>
+      `}
+      <div class="notice">RAM thiết bị thật (VD: 8GB/16GB) chỉ có thể đọc được từ ứng dụng Android gốc (Kotlin) qua ActivityManager.MemoryInfo, không thể qua web.</div>
+    </div>
+    <button class="btn btn-primary" data-action="ram-clean">TỐI ƯU (Gợi ý dọn bộ nhớ)</button>
+    <div class="notice">Nút này chỉ có thể đề nghị trình duyệt thu gom bộ nhớ (garbage collection) của chính ứng dụng Booster — không xoá RAM ảo, không tăng dung lượng RAM.</div>
+  </div>`;
+}
+
+/* ---------------- TEMPERATURE ---------------- */
+function tempAvailable(){ return false; } // no standard browser API exposes device temperature
+function tempScreen(){
+  return `
+  <div class="screen">
+    <div class="screen-title">Nhiệt độ</div>
+    <div class="screen-sub">Không có API web chuẩn để đọc nhiệt độ CPU/pin thiết bị.</div>
+    <div class="card">
+      <div class="card-head"><h3>CPU</h3>${unavailBadge()}</div>
+      <div class="bignum unavailable">Không thể đọc nhiệt độ CPU trên thiết bị này.</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Pin</h3>${unavailBadge()}</div>
+      <div class="bignum unavailable">Không thể đọc nhiệt độ pin trên thiết bị này.</div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h3>Ngưỡng phân loại (có thể chỉnh)</h3></div>
+      <div class="stat-row"><span>Mát</span><span class="val">&lt; 40°C</span></div>
+      <div class="stat-row"><span>Bình thường</span><span class="val">40–45°C</span></div>
+      <div class="stat-row"><span>Ấm</span><span class="val">45–50°C</span></div>
+      <div class="stat-row"><span>Nóng</span><span class="val">50–55°C</span></div>
+      <div class="stat-row"><span>Rất nóng</span><span class="val">&gt; 55°C</span></div>
+      <div class="notice">Trên bản Android gốc, các ngưỡng này sẽ đọc qua BatteryManager / thermal API và áp dụng cho cảnh báo Anti-Overheat.</div>
+    </div>
+  </div>`;
+}
+
+/* ---------------- BATTERY ---------------- */
+function batteryScreen(){
+  const b = state.battery;
+  return `
+  <div class="screen">
+    <div class="screen-title">Pin</div>
+    <div class="screen-sub">Đọc trực tiếp qua Battery Status API nếu trình duyệt hỗ trợ.</div>
+    <div class="card">
+      <div class="card-head"><h3>Trạng thái pin</h3>${b.supported ? liveBadge() : unavailBadge()}</div>
+      ${b.supported ? `
+        <div class="bignum">${Math.round(b.level*100)}<span class="unit">%</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(b.level*1
