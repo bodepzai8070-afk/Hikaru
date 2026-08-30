@@ -1,3 +1,6 @@
+-- ============================================================================
+-- MODULE: CORE CONFIGURATION & STATE
+-- ============================================================================
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
@@ -31,9 +34,11 @@ local State = {
     OriginalCollisionStates = {},
     GhostConnection = nil
 }
-
+-- ============================================================================
+-- MODULE: UI FRAMEWORK & DRAGGABLE INTERFACE
+-- ============================================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Kirada_Ultimate_Suite"
+ScreenGui.Name = "Kirada_Modular_Suite"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 pcall(function()
@@ -90,7 +95,7 @@ TitleBar.Name = "TitleBar"
 TitleBar.Size = UDim2.new(1, 0, 0, 36)
 TitleBar.BackgroundColor3 = Color3.fromRGB(22, 26, 34)
 TitleBar.BackgroundTransparency = 0.5
-TitleBar.Text = "  KIRADA // ULTIMATE_SUITE"
+TitleBar.Text = "  KIRADA // MODULAR"
 TitleBar.TextColor3 = Color3.fromRGB(240, 244, 248)
 TitleBar.TextSize = 13
 TitleBar.Font = CONFIG.FONT
@@ -132,6 +137,15 @@ end
 makeDraggable(LogoButton)
 makeDraggable(MainFrame)
 
+LogoButton.MouseButton1Click:Connect(function()
+    State.MenuOpen = not State.MenuOpen
+    local targetSize = State.MenuOpen and UDim2.new(0, 300, 0, 370) or UDim2.new(0, 0, 0, 0)
+    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
+    TweenService:Create(MainFrame, tweenInfo, {Size = targetSize}):Play()
+end)
+-- ============================================================================
+-- FUNCTION A: TACTICAL ESP MODULE
+-- ============================================================================
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Size = UDim2.new(0.9, 0, 0, 36)
 ToggleButton.Position = UDim2.new(0.05, 0, 0.12, 0)
@@ -169,6 +183,91 @@ ToggleButton.MouseButton1Click:Connect(function()
     end
 end)
 
+local function acquireESPNode(player)
+    if State.ActivePool[player] then return State.ActivePool[player] end
+    local billboard = Instance.new("BillboardGui")
+    billboard.Name = "KiradaNode"
+    billboard.Size = UDim2.new(0, 220, 0, 65)
+    billboard.StudsOffset = Vector3.new(0, 2.8, 0)
+    billboard.AlwaysOnTop = true
+    billboard.Enabled = false
+
+    local textLabel = Instance.new("TextLabel")
+    textLabel.Size = UDim2.new(1, 0, 1, 0)
+    textLabel.BackgroundTransparency = 1
+    textLabel.TextStrokeTransparency = 0.1
+    textLabel.TextStrokeColor3 = Color3.fromRGB(5, 7, 10)
+    textLabel.TextSize = 12
+    textLabel.Font = CONFIG.FONT
+    textLabel.Text = ""
+    textLabel.Parent = billboard
+
+    local nodeData = { Billboard = billboard, Label = textLabel }
+    State.ActivePool[player] = nodeData
+    return nodeData
+end
+
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LocalPlayer then
+        acquireESPNode(player)
+    end
+end)
+
+Players.PlayerRemoving:Connect(function(player)
+    if State.ActivePool[player] then
+        if State.ActivePool[player].Billboard then
+            State.ActivePool[player].Billboard:Destroy()
+        end
+        State.ActivePool[player] = nil
+    end
+end)
+
+local initialPlayers = Players:GetPlayers()
+for i = 1, #initialPlayers do
+    local player = initialPlayers[i]
+    if player ~= LocalPlayer then
+        acquireESPNode(player)
+    end
+end
+
+task.spawn(function()
+    while true do
+        task.wait(CONFIG.THROTTLE_INTERVAL)
+        if State.EspEnabled then
+            local localChar = LocalPlayer.Character
+            local localRoot = localChar and localChar:FindFirstChild("HumanoidRootPart")
+            for player, data in pairs(State.ActivePool) do
+                local char = player.Character
+                local root = char and char:FindFirstChild("HumanoidRootPart")
+                local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+                if localRoot and root and humanoid and humanoid.Health > 0 then
+                    if not data.Billboard.Parent and char:FindFirstChild("Head") then
+                        data.Billboard.Parent = char.Head
+                    end
+                    data.Billboard.Enabled = true
+                    local distanceStuds = (localRoot.Position - root.Position).Magnitude
+                    local distanceMeters = distanceStuds * CONFIG.STUDS_TO_METERS
+                    local isFriend = CONFIG.FRIEND_LIST[player.Name] == true or CONFIG.FRIEND_LIST[tostring(player.UserId)] == true
+                    local statusColor = isFriend and CONFIG.SAFE_COLOR or CONFIG.WARNING_COLOR
+                    local statusText = isFriend and "FRIEND" or "HOSTILE"
+                    data.Label.TextColor3 = statusColor
+                    data.Label.Text = string.format("[%s] %s\nHEALTH: %d%%\nRANGE: %.1fm", statusText, player.Name, math.floor(humanoid.Health), distanceMeters)
+                else
+                    data.Billboard.Enabled = false
+                end
+            end
+        else
+            for _, data in pairs(State.ActivePool) do
+                if data.Billboard then
+                    data.Billboard.Enabled = false
+                end
+            end
+        end
+    end
+end)
+-- ============================================================================
+-- FUNCTION B: SECURE NOCLIP MODULE
+-- ============================================================================
 local function cacheCharacterParts(char)
     table.clear(State.CachedCharacterParts)
     table.clear(State.OriginalCollisionStates)
@@ -254,6 +353,9 @@ NoclipButton.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ============================================================================
+-- FUNCTION C: MAX PERFORMANCE RENDERING REDUCTION MODULE
+-- ============================================================================
 local LagButton = Instance.new("TextButton")
 LagButton.Size = UDim2.new(0.9, 0, 0, 36)
 LagButton.Position = UDim2.new(0.05, 0, 0.38, 0)
@@ -310,12 +412,14 @@ LagButton.MouseButton1Click:Connect(function()
         LagStroke.Color = CONFIG.WARNING_COLOR
     end
 end)
-
+-- ============================================================================
+-- FUNCTION D: TRUE SERVER-AUTHORITATIVE GHOST INVISIBILITY MODULE
+-- ============================================================================
 local GhostButton = Instance.new("TextButton")
 GhostButton.Size = UDim2.new(0.9, 0, 0, 36)
 GhostButton.Position = UDim2.new(0.05, 0, 0.51, 0)
 GhostButton.BackgroundColor3 = Color3.fromRGB(25, 30, 40)
-GhostButton.Text = "GHOST INVISIBILITY: OFF"
+GhostButton.Text = "TRUE GHOST: OFF"
 GhostButton.TextColor3 = CONFIG.WARNING_COLOR
 GhostButton.TextSize = 12
 GhostButton.Font = CONFIG.FONT
@@ -336,13 +440,18 @@ GhostButton.MouseButton1Click:Connect(function()
     State.GhostActive = not State.GhostActive
     local char = LocalPlayer.Character
     if State.GhostActive then
-        GhostButton.Text = "GHOST INVISIBILITY: ON"
+        GhostButton.Text = "TRUE GHOST: ON"
         GhostButton.TextColor3 = CONFIG.SAFE_COLOR
         GhostStroke.Color = CONFIG.SAFE_COLOR
+        
         if char then
             for _, item in ipairs(char:GetDescendants()) do
-                if item:IsA("BasePart") or item:IsA("MeshPart") then
+                if item:IsA("BasePart") then
                     item.Transparency = 1
+                    item.CanCollide = false
+                    pcall(function()
+                        item:SetNetworkOwner(nil)
+                    end)
                 elseif item:IsA("Decal") or item:IsA("Texture") then
                     item.Transparency = 1
                 elseif item:IsA("BillboardGui") or item:IsA("SurfaceGui") then
@@ -350,14 +459,18 @@ GhostButton.MouseButton1Click:Connect(function()
                 end
             end
         end
+
         State.GhostConnection = RunService.RenderStepped:Connect(function()
             if not State.GhostActive then return end
             local currentCharacter = LocalPlayer.Character
             if currentCharacter then
                 for _, item in ipairs(currentCharacter:GetDescendants()) do
-                    if item:IsA("BasePart") or item:IsA("MeshPart") then
+                    if item:IsA("BasePart") then
                         if item.Transparency ~= 1 then
                             item.Transparency = 1
+                        end
+                        if item.CanCollide then
+                            item.CanCollide = false
                         end
                     elseif item:IsA("Decal") or item:IsA("Texture") then
                         if item.Transparency ~= 1 then
@@ -372,21 +485,26 @@ GhostButton.MouseButton1Click:Connect(function()
             end
         end)
     else
-        GhostButton.Text = "GHOST INVISIBILITY: OFF"
+        GhostButton.Text = "TRUE GHOST: OFF"
         GhostButton.TextColor3 = CONFIG.WARNING_COLOR
         GhostStroke.Color = CONFIG.WARNING_COLOR
+        
         if State.GhostConnection then
             State.GhostConnection:Disconnect()
             State.GhostConnection = nil
         end
+        
         if char then
             for _, item in ipairs(char:GetDescendants()) do
-                if item:IsA("BasePart") or item:IsA("MeshPart") then
+                if item:IsA("BasePart") then
                     if item.Name == "HumanoidRootPart" then
                         item.Transparency = 1
                     else
                         item.Transparency = 0
                     end
+                    pcall(function()
+                        item:SetNetworkOwner(LocalPlayer)
+                    end)
                 elseif item:IsA("Decal") or item:IsA("Texture") then
                     item.Transparency = 0
                 elseif item:IsA("BillboardGui") or item:IsA("SurfaceGui") then
@@ -397,6 +515,9 @@ GhostButton.MouseButton1Click:Connect(function()
     end
 end)
 
+-- ============================================================================
+-- FUNCTION E: TARGETED TELEPORTER MODULE
+-- ============================================================================
 local TeleportBox = Instance.new("TextBox")
 TeleportBox.Size = UDim2.new(0.6, 0, 0, 36)
 TeleportBox.Position = UDim2.new(0.05, 0, 0.67, 0)
@@ -451,92 +572,4 @@ TeleportButton.MouseButton1Click:Connect(function()
     end
 end)
 
-LogoButton.MouseButton1Click:Connect(function()
-    State.MenuOpen = not State.MenuOpen
-    local targetSize = State.MenuOpen and UDim2.new(0, 300, 0, 370) or UDim2.new(0, 0, 0, 0)
-    local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
-    TweenService:Create(MainFrame, tweenInfo, {Size = targetSize}):Play()
-end)
 
-local function acquireESPNode(player)
-    if State.ActivePool[player] then return State.ActivePool[player] end
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "KiradaNode"
-    billboard.Size = UDim2.new(0, 220, 0, 65)
-    billboard.StudsOffset = Vector3.new(0, 2.8, 0)
-    billboard.AlwaysOnTop = true
-    billboard.Enabled = false
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.TextStrokeTransparency = 0.1
-    textLabel.TextStrokeColor3 = Color3.fromRGB(5, 7, 10)
-    textLabel.TextSize = 12
-    textLabel.Font = CONFIG.FONT
-    textLabel.Text = ""
-    textLabel.Parent = billboard
-
-    local nodeData = { Billboard = billboard, Label = textLabel }
-    State.ActivePool[player] = nodeData
-    return nodeData
-end
-
-Players.PlayerAdded:Connect(function(player)
-    if player ~= LocalPlayer then
-        acquireESPNode(player)
-    end
-end)
-
-Players.PlayerRemoving:Connect(function(player)
-    if State.ActivePool[player] then
-        if State.ActivePool[player].Billboard then
-            State.ActivePool[player].Billboard:Destroy()
-        end
-        State.ActivePool[player] = nil
-    end
-end)
-
-local initialPlayers = Players:GetPlayers()
-for i = 1, #initialPlayers do
-    local player = initialPlayers[i]
-    if player ~= LocalPlayer then
-        acquireESPNode(player)
-    end
-end
-
-task.spawn(function()
-    while true do
-        task.wait(CONFIG.THROTTLE_INTERVAL)
-        if State.EspEnabled then
-            local localChar = LocalPlayer.Character
-            local localRoot = localChar and localChar:FindFirstChild("HumanoidRootPart")
-            for player, data in pairs(State.ActivePool) do
-                local char = player.Character
-                local root = char and char:FindFirstChild("HumanoidRootPart")
-                local humanoid = char and char:FindFirstChildOfClass("Humanoid")
-                if localRoot and root and humanoid and humanoid.Health > 0 then
-                    if not data.Billboard.Parent and char:FindFirstChild("Head") then
-                        data.Billboard.Parent = char.Head
-                    end
-                    data.Billboard.Enabled = true
-                    local distanceStuds = (localRoot.Position - root.Position).Magnitude
-                    local distanceMeters = distanceStuds * CONFIG.STUDS_TO_METERS
-                    local isFriend = CONFIG.FRIEND_LIST[player.Name] == true or CONFIG.FRIEND_LIST[tostring(player.UserId)] == true
-                    local statusColor = isFriend and CONFIG.SAFE_COLOR or CONFIG.WARNING_COLOR
-                    local statusText = isFriend and "FRIEND" or "HOSTILE"
-                    data.Label.TextColor3 = statusColor
-                    data.Label.Text = string.format("[%s] %s\nHEALTH: %d%%\nRANGE: %.1fm", statusText, player.Name, math.floor(humanoid.Health), distanceMeters)
-                else
-                    data.Billboard.Enabled = false
-                end
-            end
-        else
-            for _, data in pairs(State.ActivePool) do
-                if data.Billboard then
-                    data.Billboard.Enabled = false
-                end
-            end
-        end
-    end
-end)
