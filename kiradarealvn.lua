@@ -42,6 +42,7 @@ local State = {
     LowGraphicsActive = false,
     InfinityJumpActive = false,
     LockOnActive = false,
+    FlyActive = false,
     CurrentTarget = nil,
     ActivePool = {},
     NoclipConnection = nil,
@@ -64,7 +65,6 @@ if ScreenGui.Parent ~= CoreGui then
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Nút Logo mở/đóng gọn gàng với chữ 'k'
 local LogoButton = Instance.new("TextButton")
 LogoButton.Name = "LogoButton"
 LogoButton.Size = UDim2.new(0, 42, 0, 42)
@@ -87,7 +87,6 @@ LogoStroke.Transparency = 0.4
 LogoStroke.Thickness = 1.2
 LogoStroke.Parent = LogoButton
 
--- Main Frame mở rộng vừa vặn để hiển thị lưới 2 cột mỗi hàng
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Size = UDim2.new(0, 340, 0, 310)
@@ -108,7 +107,6 @@ MainStroke.Transparency = 0.5
 MainStroke.Thickness = 1
 MainStroke.Parent = MainFrame
 
--- Tiêu đề tối giản
 local TitleBar = Instance.new("TextLabel")
 TitleBar.Name = "TitleBar"
 TitleBar.Size = UDim2.new(1, 0, 0, 34)
@@ -125,13 +123,12 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 12)
 TitleCorner.Parent = TitleBar
 
--- Scrolling Frame chứa danh sách các ô chức năng
 local ContentScroll = Instance.new("ScrollingFrame")
 ContentScroll.Size = UDim2.new(1, -12, 1, -44)
 ContentScroll.Position = UDim2.new(0, 6, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 320)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 380)
 ContentScroll.ScrollBarThickness = 2
 ContentScroll.ScrollBarImageColor3 = CONFIG.THEME.ACCENT
 ContentScroll.Parent = MainFrame
@@ -174,7 +171,6 @@ LogoButton.MouseButton1Click:Connect(function()
     TweenService:Create(MainFrame, tweenInfo, {Size = targetSize}):Play()
 end)
 
--- Hàm tạo card lưới ô vuông gọn gàng (Nút trên, ô nhập dưới nếu có)
 local function createGridCard(name, defaultText, hasInput, placeholder, layoutOrder, onInputFocusLost)
     local card = Instance.new("Frame")
     card.Name = name
@@ -246,7 +242,7 @@ local function createGridCard(name, defaultText, hasInput, placeholder, layoutOr
 end
 
 -- ============================================================================
--- XÂY DỰNG CÁC TÍNH NĂNG TRONG MENU (MỖI HÀNG 2 CHỨC NĂNG)
+-- FEATURES IMPLEMENTATION
 -- ============================================================================
 
 -- 1. ESP Toggle
@@ -472,52 +468,7 @@ LagBtn.MouseButton1Click:Connect(function()
     end
 end)
 
-Workspace.DescendantAdded:Connect(function(obj)
-    if not State.LowGraphicsActive then return end
-    local localChar = LocalPlayer.Character
-    if localChar and (obj == localChar or obj:IsDescendantOf(localChar)) then return end
-    task.defer(function() smartOptimizeObject(obj) end)
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(3)
-        if State.LowGraphicsActive then
-            local localChar = LocalPlayer.Character
-            local localRoot = localChar and localChar:FindFirstChild("HumanoidRootPart")
-            if localRoot then
-                for _, player in ipairs(Players:GetPlayers()) do
-                    if player ~= LocalPlayer then
-                        local char = player.Character
-                        local root = char and char:FindFirstChild("HumanoidRootPart")
-                        if char and root then
-                            local distance = (localRoot.Position - root.Position).Magnitude
-                            if distance > CONFIG.CULL_DISTANCE then
-                                if char.Parent ~= nil then char.Parent = nil end
-                            else
-                                if char.Parent == nil then char.Parent = Workspace end
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end
-end)
-
-task.spawn(function()
-    while true do
-        task.wait(20)
-        if State.LowGraphicsActive then
-            pcall(function()
-                settings():GetService("RenderSettings").QualityLevel = Enum.QualityLevel.Level01
-                collectgarbage("collect")
-            end)
-        end
-    end
-end)
-
--- 5. WalkSpeed Card (Nút trên, ô nhập tốc độ dưới)
+-- 5. WalkSpeed Card
 local SpeedBtn, SpeedStroke, SpeedBox = createGridCard("SpeedCard", "TỐC ĐỘ CHẠY", true, "Nhập tốc độ...", 5, function(text)
     local val = tonumber(text)
     if val and LocalPlayer.Character then
@@ -533,7 +484,7 @@ SpeedBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 6. Camera Lock-On Card (Nút trên, ô nhập bán kính vòng tròn dưới)
+-- 6. Camera Lock-On Card
 local ScopeCircle = Drawing.new("Circle")
 ScopeCircle.Visible = false
 ScopeCircle.Thickness = 1.5
@@ -595,7 +546,7 @@ UserInputService.InputBegan:Connect(function(input)
     end
 end)
 UserInputService.InputChanged:Connect(function(input)
-    if State.LockOnActive and State.CurrentTarget and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+    if State.LockOnActive and State.CurrentTarget and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.MouseMovement) then
         if lastTouchPos and (input.Position - lastTouchPos).Magnitude > CONFIG.BREAK_SWIPE_THRESHOLD then
             State.CurrentTarget = nil
         end
@@ -637,7 +588,7 @@ LockBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 7. Teleport Card (Nút TP trên, ô nhập tên/ID dưới)
+-- 7. Teleport Card
 local TpButton, TpStroke, TeleportBox = createGridCard("TeleportCard", "TELEPORT", true, "Tên/ID người chơi...", 7, function() end)
 TpButton.TextColor3 = CONFIG.THEME.ACCENT
 TpStroke.Color = CONFIG.THEME.ACCENT
@@ -661,5 +612,32 @@ TpButton.MouseButton1Click:Connect(function()
         if targetRoot and localRoot then
             localRoot.CFrame = targetRoot.CFrame + Vector3.new(0, 3, 0)
         end
+    end
+end)
+
+-- 8. Fly Script Integration Card
+local FlyBtn, FlyStroke = createGridCard("FlyCard", "BAY (FLY): TẮT", false, "", 8)
+local flyEnv = nil
+
+FlyBtn.MouseButton1Click:Connect(function()
+    State.FlyActive = not State.FlyActive
+    if State.FlyActive then
+        FlyBtn.Text = "BAY (FLY): BẬT"
+        FlyBtn.TextColor3 = CONFIG.THEME.SUCCESS
+        FlyStroke.Color = CONFIG.THEME.SUCCESS
+        pcall(function()
+            flyEnv = loadstring(game:HttpGet("https://raw.githubusercontent.com/bodepzai8070-afk/kiradaprimefly/refs/heads/main/kiradafly.lua"))()
+        end)
+    else
+        FlyBtn.Text = "BAY (FLY): TẮT"
+        FlyBtn.TextColor3 = CONFIG.THEME.WARNING
+        FlyStroke.Color = CONFIG.THEME.WARNING
+        -- Nếu script trả về một bảng hoặc hàm hủy, ta xử lý gọi dừng bay nếu cần
+        if type(flyEnv) == "table" and rawget(flyEnv, "Stop") then
+            pcall(flyEnv.Stop)
+        elseif type(flyEnv) == "function" then
+            pcall(flyEnv)
+        end
+        flyEnv = nil
     end
 end)
