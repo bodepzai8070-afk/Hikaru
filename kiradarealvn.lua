@@ -705,7 +705,7 @@ FlyBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================================================
--- 9. YORU PRIME: TOẠ ĐỘ & NÚT SAO CHÉP RIÊNG BIỆT (KHÔNG GÂY LAG)
+-- 9. YORU PRIME: TOẠ ĐỘ & NÚT SAO CHÉP THỦ CÔNG (CHỐNG SPAM / KHÔNG LAG)
 -- ============================================================================
 local CoordsBtn, CoordsStroke = createGridCard("CoordsCard", "TOẠ ĐỘ: TẮT", false, "", 9)
 
@@ -718,7 +718,7 @@ if YoruGui.Parent ~= CoreGui then
     YoruGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Khung hiển thị toạ độ & nút sao chép thủ công (Cyberpunk tối ưu)
+-- Khung hiển thị toạ độ tích hợp nút bấm sao chép thủ công
 local CoordsFrame = Instance.new("Frame")
 CoordsFrame.Size = UDim2.new(0, 240, 0, 115)
 CoordsFrame.Position = UDim2.new(0.03, 0, 0.45, 0)
@@ -763,7 +763,7 @@ CoordsTextLabel.Font = CONFIG.FONT_BOLD
 CoordsTextLabel.TextXAlignment = Enum.TextXAlignment.Left
 CoordsTextLabel.Parent = CoordsFrame
 
--- Nút bấm sao chép thủ công chuyên dụng (Tránh spam liên tục gây lag game)
+-- Nút sao chép thủ công (Chỉ copy khi bạn nhấn nút, loại bỏ hoàn toàn tự động spam)
 local CopyButton = Instance.new("TextButton")
 CopyButton.Size = UDim2.new(1, -16, 0, 28)
 CopyButton.Position = UDim2.new(0, 8, 0, 72)
@@ -787,7 +787,6 @@ CopyBtnStroke.Parent = CopyButton
 
 makeDraggable(CoordsFrame)
 
--- Biến lưu giữ toạ độ hiện tại để bấm nút là copy ngay
 local latestPosString = "X: 0.0 | Y: 0.0 | Z: 0.0"
 
 CopyButton.MouseButton1Click:Connect(function()
