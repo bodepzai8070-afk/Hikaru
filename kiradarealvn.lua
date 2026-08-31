@@ -19,20 +19,20 @@ local CONFIG = {
     STUDS_TO_METERS = 0.28,
     THROTTLE_INTERVAL = 0.03,
     THEME = {
-        BG = Color3.fromRGB(10, 11, 15),
-        CONTAINER = Color3.fromRGB(15, 17, 23),
-        ACCENT = Color3.fromRGB(0, 240, 180),
-        WARNING = Color3.fromRGB(255, 65, 90),
-        SUCCESS = Color3.fromRGB(0, 230, 118),
+        BG = Color3.fromRGB(8, 9, 13),
+        CONTAINER = Color3.fromRGB(13, 15, 22),
+        ACCENT = Color3.fromRGB(0, 255, 170),
+        WARNING = Color3.fromRGB(255, 75, 100),
+        SUCCESS = Color3.fromRGB(0, 240, 120),
         TEXT_MAIN = Color3.fromRGB(245, 247, 250),
-        TEXT_MUTED = Color3.fromRGB(110, 120, 140),
-        STROKE = Color3.fromRGB(35, 42, 58)
+        TEXT_MUTED = Color3.fromRGB(120, 130, 150),
+        STROKE = Color3.fromRGB(30, 36, 50),
+        GLOW = Color3.fromRGB(0, 255, 170)
     },
     FONT = Enum.Font.GothamMedium,
     FONT_BOLD = Enum.Font.GothamBold,
     CULL_DISTANCE = 250,
-    LOCK_RADIUS = 35,
-    BREAK_SWIPE_THRESHOLD = 35
+    LOCK_RADIUS = 35
 }
 
 local State = {
@@ -54,7 +54,7 @@ local State = {
 }
 
 -- ============================================================================
--- GIAO DIỆN CHÍNH & MÀN HÌNH KHỞI ĐỘNG (4S ANIMATION)
+-- GIAO DIỆN CHÍNH & MÀN HÌNH KHỞI ĐỘNG ĐIỆN ẢNH (CINEMATIC INTRO 4S)
 -- ============================================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Kiradavn_Prime_Suite"
@@ -66,73 +66,88 @@ if ScreenGui.Parent ~= CoreGui then
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Intro Loader Frame (Che toàn màn hình lúc đầu để chạy animation 4s)
+-- Cinematic Fullscreen Intro Background
 local IntroFrame = Instance.new("Frame")
 IntroFrame.Name = "IntroFrame"
 IntroFrame.Size = UDim2.new(1, 0, 1, 0)
 IntroFrame.BackgroundColor3 = CONFIG.THEME.BG
 IntroFrame.BackgroundTransparency = 0
 IntroFrame.BorderSizePixel = 0
-IntroFrame.ZIndex = 10
+IntroFrame.ZIndex = 50
 IntroFrame.Parent = ScreenGui
 
--- Logo chữ k xoay vòng ở giữa màn hình intro
+-- Hiệu ứng Glow mờ ảo sau logo
+local IntroGlow = Instance.new("Frame")
+IntroGlow.Name = "IntroGlow"
+IntroGlow.Size = UDim2.new(0, 140, 0, 140)
+IntroGlow.AnchorPoint = Vector2.new(0.5, 0.5)
+IntroGlow.Position = UDim2.new(0.5, 0, 0.42, 0)
+IntroGlow.BackgroundColor3 = CONFIG.THEME.ACCENT
+IntroGlow.BackgroundTransparency = 0.85
+IntroGlow.BorderSizePixel = 0
+IntroGlow.ZIndex = 51
+IntroGlow.Parent = IntroFrame
+
+local GlowCorner = Instance.new("UICorner")
+GlowCorner.CornerRadius = UDim.new(1, 0)
+GlowCorner.Parent = IntroGlow
+
+-- Logo 'k' xoay cực mượt
 local IntroLogo = Instance.new("TextButton")
 IntroLogo.Name = "IntroLogo"
-IntroLogo.Size = UDim2.new(0, 80, 0, 80)
+IntroLogo.Size = UDim2.new(0, 76, 0, 76)
 IntroLogo.AnchorPoint = Vector2.new(0.5, 0.5)
-IntroLogo.Position = UDim2.new(0.5, 0, 0.44, 0)
+IntroLogo.Position = UDim2.new(0.5, 0, 0.42, 0)
 IntroLogo.BackgroundColor3 = CONFIG.THEME.CONTAINER
 IntroLogo.Text = "k"
 IntroLogo.TextColor3 = CONFIG.THEME.ACCENT
-IntroLogo.TextSize = 36
+IntroLogo.TextSize = 34
 IntroLogo.Font = CONFIG.FONT_BOLD
 IntroLogo.AutoButtonColor = false
-IntroLogo.ZIndex = 11
+IntroLogo.ZIndex = 52
 IntroLogo.Parent = IntroFrame
 
 local IntroLogoCorner = Instance.new("UICorner")
-IntroLogoCorner.CornerRadius = UDim.new(0, 16)
+IntroLogoCorner.CornerRadius = UDim.new(0, 18)
 IntroLogoCorner.Parent = IntroLogo
 
 local IntroLogoStroke = Instance.new("UIStroke")
 IntroLogoStroke.Color = CONFIG.THEME.ACCENT
-IntroLogoStroke.Transparency = 0.2
+IntroLogoStroke.Transparency = 0.1
 IntroLogoStroke.Thickness = 2
 IntroLogoStroke.Parent = IntroLogo
 
--- Dòng chữ Kirada Prime hiện ra sau khi logo xoay
+-- Tiêu đề Kirada Prime xuất hiện sau đó
 local IntroText = Instance.new("TextLabel")
 IntroText.Name = "IntroText"
-IntroText.Size = UDim2.new(0, 300, 0, 40)
+IntroText.Size = UDim2.new(0, 320, 0, 40)
 IntroText.AnchorPoint = Vector2.new(0.5, 0.5)
-IntroText.Position = UDim2.new(0.5, 0, 0.58, 0)
+IntroText.Position = UDim2.new(0.5, 0, 0.56, 0)
 IntroText.BackgroundTransparency = 1
 IntroText.Text = "KIRADA PRIME"
 IntroText.TextColor3 = CONFIG.THEME.TEXT_MAIN
-IntroText.TextSize = 16
+IntroText.TextSize = 18
 IntroText.Font = CONFIG.FONT_BOLD
 IntroText.TextTransparency = 1
-IntroText.ZIndex = 11
+IntroText.ZIndex = 52
 IntroText.Parent = IntroFrame
 
--- Chạy Animation 4 giây mượt mà
+-- Chạy Animation 4 giây hoàn hảo
 task.spawn(function()
-    -- Xoay vòng chữ k liên tục trong 3.2 giây đầu tiên
     local spinTween = TweenService:Create(IntroLogo, TweenInfo.new(3.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, -1), {Rotation = 360})
     spinTween:Play()
 
-    -- Sau 1.5 giây, hiện chữ Kirada Prime lên
-    task.wait(1.5)
+    TweenService:Create(IntroGlow, TweenInfo.new(1.5, Enum.EasingStyle.Sine, Enum.EasingDirection.Out), {BackgroundTransparency = 0.5}):Play()
+
+    task.wait(1.4)
     TweenService:Create(IntroText, TweenInfo.new(1.0, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {TextTransparency = 0}):Play()
 
-    -- Đợi đến mốc 4 giây hoàn tất
-    task.wait(1.7)
+    task.wait(1.8)
     spinTween:Cancel()
 
-    -- Hiệu ứng fade out toàn bộ màn hình intro cực mượt
     local fadeInfo = TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
     TweenService:Create(IntroFrame, fadeInfo, {BackgroundTransparency = 1}):Play()
+    TweenService:Create(IntroGlow, fadeInfo, {BackgroundTransparency = 1}):Play()
     TweenService:Create(IntroLogo, fadeInfo, {TextTransparency = 1, BackgroundTransparency = 1}):Play()
     TweenService:Create(IntroLogoStroke, fadeInfo, {Transparency = 1}):Play()
     TweenService:Create(IntroText, fadeInfo, {TextTransparency = 1}):Play()
@@ -141,7 +156,7 @@ task.spawn(function()
     IntroFrame:Destroy()
 end)
 
--- Nút Logo chính ngoài màn hình (ẩn khi intro chưa chạy xong)
+-- Giao diện điều khiển chính (Logo K thu nhỏ ngoài màn hình)
 local LogoButton = Instance.new("TextButton")
 LogoButton.Name = "LogoButton"
 LogoButton.Size = UDim2.new(0, 42, 0, 42)
@@ -189,7 +204,7 @@ TitleBar.Name = "TitleBar"
 TitleBar.Size = UDim2.new(1, 0, 0, 34)
 TitleBar.BackgroundColor3 = CONFIG.THEME.CONTAINER
 TitleBar.BackgroundTransparency = 0.5
-TitleBar.Text = "  KIRADAVN PRIME (3-COL)"
+TitleBar.Text = "  KIRADAVN PRIME"
 TitleBar.TextColor3 = CONFIG.THEME.TEXT_MAIN
 TitleBar.TextSize = 11
 TitleBar.Font = CONFIG.FONT_BOLD
@@ -319,22 +334,22 @@ local function createGridCard(name, defaultText, hasInput, placeholder, layoutOr
 end
 
 -- ============================================================================
--- CÁC TÍNH NĂNG TRONG HỆ THỐNG
+-- CÁC TÍNH NĂNG TRONG HỆ THỐNG (ĐÃ DỊCH SANG TIẾNG VIỆT HOÀN TOÀN)
 -- ============================================================================
 
 -- 1. ESP Toggle
-local EspBtn, EspStroke = createGridCard("EspCard", "ESP: BẬT", false, "", 1)
+local EspBtn, EspStroke = createGridCard("EspCard", "NHÌN XUYÊN: BẬT", false, "", 1)
 EspBtn.TextColor3 = CONFIG.THEME.SUCCESS
 EspStroke.Color = CONFIG.THEME.SUCCESS
 
 EspBtn.MouseButton1Click:Connect(function()
     State.EspEnabled = not State.EspEnabled
     if State.EspEnabled then
-        EspBtn.Text = "ESP: BẬT"
+        EspBtn.Text = "NHÌN XUYÊN: BẬT"
         EspBtn.TextColor3 = CONFIG.THEME.SUCCESS
         EspStroke.Color = CONFIG.THEME.SUCCESS
     else
-        EspBtn.Text = "ESP: TẮT"
+        EspBtn.Text = "NHÌN XUYÊN: TẮT"
         EspBtn.TextColor3 = CONFIG.THEME.WARNING
         EspStroke.Color = CONFIG.THEME.WARNING
         for _, data in pairs(State.ActivePool) do
@@ -409,7 +424,7 @@ task.spawn(function()
 end)
 
 -- 2. Noclip Toggle
-local NoclipBtn, NoclipStroke = createGridCard("NoclipCard", "NOCLIP: TẮT", false, "", 2)
+local NoclipBtn, NoclipStroke = createGridCard("NoclipCard", "XUYÊN TƯỜNG: TẮT", false, "", 2)
 local function cacheCharacterParts(char)
     table.clear(State.CachedCharacterParts)
     table.clear(State.OriginalCollisionStates)
@@ -430,7 +445,7 @@ if LocalPlayer.Character then cacheCharacterParts(LocalPlayer.Character) end
 NoclipBtn.MouseButton1Click:Connect(function()
     State.NoclipActive = not State.NoclipActive
     if State.NoclipActive then
-        NoclipBtn.Text = "NOCLIP: BẬT"
+        NoclipBtn.Text = "XUYÊN TƯỜNG: BẬT"
         NoclipBtn.TextColor3 = CONFIG.THEME.SUCCESS
         NoclipStroke.Color = CONFIG.THEME.SUCCESS
         if LocalPlayer.Character then cacheCharacterParts(LocalPlayer.Character) end
@@ -442,7 +457,7 @@ NoclipBtn.MouseButton1Click:Connect(function()
             end
         end)
     else
-        NoclipBtn.Text = "NOCLIP: TẮT"
+        NoclipBtn.Text = "XUYÊN TƯỜNG: TẮT"
         NoclipBtn.TextColor3 = CONFIG.THEME.WARNING
         NoclipStroke.Color = CONFIG.THEME.WARNING
         if State.NoclipConnection then State.NoclipConnection:Disconnect(); State.NoclipConnection = nil end
@@ -546,7 +561,7 @@ LagBtn.MouseButton1Click:Connect(function()
 end)
 
 -- 5. WalkSpeed Card
-local SpeedBtn, SpeedStroke, SpeedBox = createGridCard("SpeedCard", "TỐC ĐỘ", true, "Tốc độ...", 5, function(text)
+local SpeedBtn, SpeedStroke, SpeedBox = createGridCard("SpeedCard", "TỐC ĐỘ", true, "Nhập tốc độ...", 5, function(text)
     local val = tonumber(text)
     if val and LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -571,7 +586,7 @@ ScopeCircle.Filled = false
 ScopeCircle.Color = CONFIG.THEME.SUCCESS
 ScopeCircle.Transparency = 0.7
 
-local LockBtn, LockStroke, LockRadiusBox = createGridCard("LockCard", "LOCK: TẮT", true, "Bán kính...", 6, function(text)
+local LockBtn, LockStroke, LockRadiusBox = createGridCard("LockCard", "KHÓA MỤC TIÊU", true, "Bán kính...", 6, function(text)
     local val = tonumber(text)
     if val then
         if val > 360 then val = 360 elseif val < 0 then val = 0 end
@@ -637,12 +652,12 @@ end
 LockBtn.MouseButton1Click:Connect(function()
     State.LockOnActive = not State.LockOnActive
     if State.LockOnActive then
-        LockBtn.Text = "LOCK: BẬT"
+        LockBtn.Text = "KHÓA: BẬT"
         LockBtn.TextColor3 = CONFIG.THEME.SUCCESS
         LockStroke.Color = CONFIG.THEME.SUCCESS
         State.LockOnConnection = RunService.RenderStepped:Connect(onRenderStepped)
     else
-        LockBtn.Text = "LOCK: TẮT"
+        LockBtn.Text = "KHÓA MỤC TIÊU"
         LockBtn.TextColor3 = CONFIG.THEME.WARNING
         LockStroke.Color = CONFIG.THEME.WARNING
         if State.LockOnConnection then State.LockOnConnection:Disconnect(); State.LockOnConnection = nil end
@@ -652,7 +667,7 @@ LockBtn.MouseButton1Click:Connect(function()
 end)
 
 -- 7. Teleport Card
-local TpButton, TpStroke, TeleportBox = createGridCard("TeleportCard", "TELEPORT", true, "Tên/ID...", 7, function() end)
+local TpButton, TpStroke, TeleportBox = createGridCard("TeleportCard", "DỊCH CHUYỂN", true, "Tên/ID...", 7, function() end)
 TpButton.TextColor3 = CONFIG.THEME.ACCENT
 TpStroke.Color = CONFIG.THEME.ACCENT
 TpButton.Font = CONFIG.FONT_BOLD
@@ -678,7 +693,7 @@ TpButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- 8. Fly Script Direct Integration Card
+-- 8. Fly Script Card
 local FlyBtn, FlyStroke = createGridCard("FlyCard", "BAY (FLY)", false, "", 8)
 FlyBtn.TextColor3 = CONFIG.THEME.ACCENT
 FlyStroke.Color = CONFIG.THEME.ACCENT
@@ -689,8 +704,10 @@ FlyBtn.MouseButton1Click:Connect(function()
     end)
 end)
 
--- 9. YORU PRIME: TOẠ ĐỘ HUD & CLIPBOARD (ON/OFF)
-local CoordsBtn, CoordsStroke = createGridCard("CoordsCard", "YORU COORDS: TẮT", false, "", 9)
+-- ============================================================================
+-- 9. YORU PRIME: TOẠ ĐỘ & SAO CHÉP (THIẾT KẾ MỚI CỰC ĐẸP)
+-- ============================================================================
+local CoordsBtn, CoordsStroke = createGridCard("CoordsCard", "TOẠ ĐỘ: TẮT", false, "", 9)
 
 local YoruGui = Instance.new("ScreenGui")
 YoruGui.Name = "YoruPrime_Coords"
@@ -701,29 +718,30 @@ if YoruGui.Parent ~= CoreGui then
     YoruGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
+-- Khung hiển thị toạ độ phong cách Cyberpunk cao cấp
 local CoordsFrame = Instance.new("Frame")
-CoordsFrame.Size = UDim2.new(0, 220, 0, 75)
+CoordsFrame.Size = UDim2.new(0, 240, 0, 85)
 CoordsFrame.Position = UDim2.new(0.03, 0, 0.45, 0)
 CoordsFrame.BackgroundColor3 = CONFIG.THEME.BG
-CoordsFrame.BackgroundTransparency = 0.2
+CoordsFrame.BackgroundTransparency = 0.15
 CoordsFrame.BorderSizePixel = 0
 CoordsFrame.Parent = YoruGui
 
 local CoordsCorner = Instance.new("UICorner")
-CoordsCorner.CornerRadius = UDim.new(0, 8)
+CoordsCorner.CornerRadius = UDim.new(0, 10)
 CoordsCorner.Parent = CoordsFrame
 
 local CoordsStrokeUI = Instance.new("UIStroke")
 CoordsStrokeUI.Color = CONFIG.THEME.ACCENT
-CoordsStrokeUI.Transparency = 0.3
-CoordsStrokeUI.Thickness = 1
+CoordsStrokeUI.Transparency = 0.2
+CoordsStrokeUI.Thickness = 1.5
 CoordsStrokeUI.Parent = CoordsFrame
 
 local CoordsTitle = Instance.new("TextLabel")
-CoordsTitle.Size = UDim2.new(1, 0, 0, 24)
+CoordsTitle.Size = UDim2.new(1, 0, 0, 26)
 CoordsTitle.BackgroundColor3 = CONFIG.THEME.CONTAINER
-CoordsTitle.BackgroundTransparency = 0.4
-CoordsTitle.Text = "  YORU PRIME [COORDS]"
+CoordsTitle.BackgroundTransparency = 0.3
+CoordsTitle.Text = "  YORU PRIME TOẠ ĐỘ"
 CoordsTitle.TextColor3 = CONFIG.THEME.ACCENT
 CoordsTitle.TextSize = 10
 CoordsTitle.Font = CONFIG.FONT_BOLD
@@ -731,26 +749,37 @@ CoordsTitle.TextXAlignment = Enum.TextXAlignment.Left
 CoordsTitle.Parent = CoordsFrame
 
 local CoordsTitleCorner = Instance.new("UICorner")
-CoordsTitleCorner.CornerRadius = UDim.new(0, 8)
+CoordsTitleCorner.CornerRadius = UDim.new(0, 10)
 CoordsTitleCorner.Parent = CoordsTitle
 
 local CoordsTextLabel = Instance.new("TextLabel")
-CoordsTextLabel.Size = UDim2.new(1, -10, 0, 40)
-CoordsTextLabel.Position = UDim2.new(0, 5, 0, 30)
+CoordsTextLabel.Size = UDim2.new(1, -16, 0, 36)
+CoordsTextLabel.Position = UDim2.new(0, 8, 0, 32)
 CoordsTextLabel.BackgroundTransparency = 1
-CoordsTextLabel.Text = "X: 0 | Y: 0 | Z: 0"
+CoordsTextLabel.Text = "X: 0.0 | Y: 0.0 | Z: 0.0"
 CoordsTextLabel.TextColor3 = CONFIG.THEME.TEXT_MAIN
-CoordsTextLabel.TextSize = 9
-CoordsTextLabel.Font = CONFIG.FONT
+CoordsTextLabel.TextSize = 10
+CoordsTextLabel.Font = CONFIG.FONT_BOLD
 CoordsTextLabel.TextXAlignment = Enum.TextXAlignment.Left
 CoordsTextLabel.Parent = CoordsFrame
+
+local CopyNotice = Instance.new("TextLabel")
+CopyNotice.Size = UDim2.new(1, -16, 0, 16)
+CopyNotice.Position = UDim2.new(0, 8, 0, 64)
+CopyNotice.BackgroundTransparency = 1
+CopyNotice.Text = "Đã tự động sao chép vào bộ nhớ tạm"
+CopyNotice.TextColor3 = CONFIG.THEME.SUCCESS
+CopyNotice.TextSize = 8
+CopyNotice.Font = CONFIG.FONT
+CopyNotice.TextXAlignment = Enum.TextXAlignment.Left
+CopyNotice.Parent = CoordsFrame
 
 makeDraggable(CoordsFrame)
 
 CoordsBtn.MouseButton1Click:Connect(function()
     State.CoordsActive = not State.CoordsActive
     if State.CoordsActive then
-        CoordsBtn.Text = "YORU COORDS: BẬT"
+        CoordsBtn.Text = "TOẠ ĐỘ: BẬT"
         CoordsBtn.TextColor3 = CONFIG.THEME.SUCCESS
         CoordsStroke.Color = CONFIG.THEME.SUCCESS
         YoruGui.Enabled = true
@@ -770,7 +799,7 @@ CoordsBtn.MouseButton1Click:Connect(function()
             end
         end)
     else
-        CoordsBtn.Text = "YORU COORDS: TẮT"
+        CoordsBtn.Text = "TOẠ ĐỘ: TẮT"
         CoordsBtn.TextColor3 = CONFIG.THEME.WARNING
         CoordsStroke.Color = CONFIG.THEME.WARNING
         YoruGui.Enabled = false
