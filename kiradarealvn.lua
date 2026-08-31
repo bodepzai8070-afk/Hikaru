@@ -16,7 +16,7 @@ local LocalPlayer = Players.LocalPlayer
 
 local CONFIG = {
     STUDS_TO_METERS = 0.28,
-    THROTTLE_INTERVAL = 0.016,
+    THROTTLE_INTERVAL = 0.03, -- Tăng nhẹ interval để giảm tải CPU
     ACCENT_COLOR = Color3.fromRGB(0, 255, 204),
     WARNING_COLOR = Color3.fromRGB(255, 50, 50),
     SAFE_COLOR = Color3.fromRGB(0, 255, 100),
@@ -37,6 +37,7 @@ local State = {
     CachedCharacterParts = {},
     OriginalCollisionStates = {}
 }
+
 -- ============================================================================
 -- PHẦN 2: XÂY DỰNG GIAO DIỆN (UI) & TÍNH NĂNG KÉO THẢ (DRAG)
 -- ============================================================================
@@ -98,7 +99,7 @@ TitleBar.Name = "TitleBar"
 TitleBar.Size = UDim2.new(1, 0, 0, 36)
 TitleBar.BackgroundColor3 = Color3.fromRGB(22, 26, 34)
 TitleBar.BackgroundTransparency = 0.5
-TitleBar.Text = "  AXIOM // DELTA_ENGINE"
+TitleBar.Text = "   AXIOM // DELTA_ENGINE"
 TitleBar.TextColor3 = Color3.fromRGB(240, 244, 248)
 TitleBar.TextSize = 13
 TitleBar.Font = CONFIG.FONT
@@ -116,11 +117,6 @@ local function makeDraggable(obj)
             dragging = true
             dragStart = input.Position
             startPos = obj.Position
-            input.Changed:Connect(function()
-                if input.UserInputState == Enum.UserInputState.End then
-                    dragging = false
-                end
-            end)
         end
     end)
 
@@ -135,6 +131,12 @@ local function makeDraggable(obj)
             )
         end
     end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
 end
 
 makeDraggable(LogoButton)
@@ -146,8 +148,9 @@ LogoButton.MouseButton1Click:Connect(function()
     local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.Out)
     TweenService:Create(MainFrame, tweenInfo, {Size = targetSize}):Play()
 end)
+
 -- ============================================================================
--- PHẦN 3: TÍNH NĂNG ESP (HIỂN THỊ TÊN & KHOẢNG CÁCH)
+-- PHẦN 3: TÍNH NĂNG ESP (HIỂN THỊ TÊN & KHOẢNG CÁCH) - SỬA LỖI RECYCLE & RESPAWN
 -- ============================================================================
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Size = UDim2.new(0.9, 0, 0, 36)
@@ -226,9 +229,7 @@ Players.PlayerRemoving:Connect(function(player)
     end
 end)
 
-local initialPlayers = Players:GetPlayers()
-for i = 1, #initialPlayers do
-    local player = initialPlayers[i]
+for _, player in ipairs(Players:GetPlayers()) do
     if player ~= LocalPlayer then
         acquireESPNode(player)
     end
@@ -243,28 +244,18 @@ task.spawn(function()
         for player, data in pairs(State.ActivePool) do
             local char = player.Character
             local root = char and char:FindFirstChild("HumanoidRootPart")
+            local head = char and char:FindFirstChild("Head")
             local humanoid = char and char:FindFirstChildOfClass("Humanoid")
             
-            if localRoot and root and humanoid and humanoid.Health > 0 then
+            if localRoot and root and head and humanoid and humanoid.Health > 0 then
                 local distanceStuds = (localRoot.Position - root.Position).Magnitude
                 
                 if distanceStuds > CONFIG.CULL_DISTANCE then
                     data.Billboard.Enabled = false
-                    for _, part in ipairs(char:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            part.LocalTransparencyModifier = 1
-                        end
-                    end
                 else
-                    for _, part in ipairs(char:GetDescendants()) do
-                        if part:IsA("BasePart") then
-                            part.LocalTransparencyModifier = 0
-                        end
-                    end
-                    
                     if State.EspEnabled then
-                        if not data.Billboard.Parent and char:FindFirstChild("Head") then
-                            data.Billboard.Parent = char.Head
+                        if data.Billboard.Parent ~= head then
+                            data.Billboard.Parent = head
                         end
                         data.Billboard.Enabled = true
                         local distanceMeters = distanceStuds * CONFIG.STUDS_TO_METERS
@@ -279,6 +270,7 @@ task.spawn(function()
         end
     end
 end)
+
 -- ============================================================================
 -- PHẦN 4: TÍNH NĂNG NOCLIP (ĐI XUYÊN TƯỜNG)
 -- ============================================================================
@@ -299,6 +291,7 @@ LocalPlayer.CharacterAdded:Connect(function(char)
         cacheCharacterParts(char)
         if State.NoclipActive then
             State.NoclipActive = false
+            -- Reset toggle ui state logic if needed
         end
     end)
 end)
@@ -363,6 +356,7 @@ NoclipButton.MouseButton1Click:Connect(function()
         end
     end
 end)
+
 -- ============================================================================
 -- PHẦN 5: TÍNH NĂNG NHẢY VÔ CỰC (INFINITY JUMP)
 -- ============================================================================
@@ -415,7 +409,7 @@ JumpButton.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================================================
--- PHẦN 6: TÍNH NĂNG TỐI ƯU FPS & GIẢM LAG (CÓ DANH SÁCH WHITELIST)
+-- PHẦN 6: TÍNH NĂNG TỐI ƯU FPS & GIẢM LAG (CÓ DANH SÁCH WHITELIST AN TOÀN)
 -- ============================================================================
 local function isWhitelisted(objName)
     local lower = objName:lower()
@@ -453,19 +447,24 @@ LagButton.MouseButton1Click:Connect(function()
                 child.Enabled = false
             end
         end
-        for _, obj in ipairs(Workspace:GetDescendants()) do
-            if obj:IsA("BasePart") then
-                if not isWhitelisted(obj.Name) then
-                    obj.CastShadow = false
-                    if obj.Material ~= Enum.Material.SmoothPlastic and obj.Material ~= Enum.Material.Plastic then
-                        obj.Material = Enum.Material.SmoothPlastic
+        
+        -- Dùng task.defer hoặc chạy ngầm để không bị khựng UI khi xử lý nhiều phần tử
+        task.spawn(function()
+            for _, obj in ipairs(Workspace:GetDescendants()) do
+                if obj:IsA("BasePart") then
+                    if not isWhitelisted(obj.Name) then
+                        obj.CastShadow = false
+                        if obj.Material ~= Enum.Material.SmoothPlastic then
+                            obj.Material = Enum.Material.SmoothPlastic
+                        end
                     end
+                elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Decal") or obj:IsA("Texture") then
+                    obj:Destroy()
                 end
-            elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") or obj:IsA("Decal") or obj:IsA("Texture") then
-                obj:Destroy()
             end
-        end
-        pcall(function() collectgarbage("collect") end)
+            pcall(function() collectgarbage("collect") end)
+        end)
+
         LagButton.Text = "TỐI ƯU FPS & GIẢM LAG: BẬT"
         LagButton.TextColor3 = CONFIG.SAFE_COLOR
         LagStroke.Color = CONFIG.SAFE_COLOR
@@ -481,6 +480,7 @@ LagButton.MouseButton1Click:Connect(function()
         LagStroke.Color = CONFIG.WARNING_COLOR
     end
 end)
+
 -- ============================================================================
 -- PHẦN 7: TÍNH NĂNG TỐC ĐỘ (WALKSPEED)
 -- ============================================================================
@@ -510,6 +510,7 @@ SpeedBox.FocusLost:Connect(function(enterPressed)
         end
     end
 end)
+
 -- ============================================================================
 -- PHẦN 8: TÍNH NĂNG DỊCH CHUYỂN THÔNG MINH (SMART TELEPORT)
 -- ============================================================================
@@ -598,4 +599,3 @@ ToggleTpButton.MouseButton1Click:Connect(function()
     ToggleTpButton.Visible = false
     TeleportBox.Text = ""
 end)
-
