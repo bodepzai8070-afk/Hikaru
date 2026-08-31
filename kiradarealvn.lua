@@ -1,8 +1,8 @@
 -- ============================================================================
--- AXIOM // ELITE CYBERNETIC MASTER SUITE (DELTA EXECUTOR)
+-- KIRADAVN PRIME CYBERNETIC MASTER SUITE (DELTA EXECUTOR)
 -- ============================================================================
-if _G.AxiomEliteSuiteExecuted then return end
-_G.AxiomEliteSuiteExecuted = true
+if _G.KiradavnPrimeSuiteExecuted then return end
+_G.KiradavnPrimeSuiteExecuted = true
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -55,7 +55,7 @@ local State = {
 -- GIAO DIỆN CHÍNH: CYBERNETIC COMPACT HUD (LOGOTYPE: K)
 -- ============================================================================
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "Axiom_Elite_Suite"
+ScreenGui.Name = "Kiradavn_Prime_Suite"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -87,10 +87,10 @@ LogoStroke.Transparency = 0.4
 LogoStroke.Thickness = 1.2
 LogoStroke.Parent = LogoButton
 
--- Main Frame gọn gàng, tinh tế
+-- Main Frame rộng hơn một chút để chứa giao diện 2 cột gọn gàng
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 260, 0, 380)
+MainFrame.Size = UDim2.new(0, 310, 0, 380)
 MainFrame.Position = UDim2.new(0.03, 52, 0.07, 0)
 MainFrame.BackgroundColor3 = CONFIG.THEME.BG
 MainFrame.BackgroundTransparency = 0.08
@@ -114,7 +114,7 @@ TitleBar.Name = "TitleBar"
 TitleBar.Size = UDim2.new(1, 0, 0, 34)
 TitleBar.BackgroundColor3 = CONFIG.THEME.CONTAINER
 TitleBar.BackgroundTransparency = 0.5
-TitleBar.Text = "  AXIOM // ELITE"
+TitleBar.Text = "  KIRADAVN PRIME"
 TitleBar.TextColor3 = CONFIG.THEME.TEXT_MAIN
 TitleBar.TextSize = 11
 TitleBar.Font = CONFIG.FONT_BOLD
@@ -125,13 +125,13 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 12)
 TitleCorner.Parent = TitleBar
 
--- Scrolling Frame chứa các nút chức năng gọn gàng
+-- Scrolling Frame chứa các tính năng chia thành 2 hàng cho mỗi chức năng
 local ContentScroll = Instance.new("ScrollingFrame")
 ContentScroll.Size = UDim2.new(1, -12, 1, -44)
 ContentScroll.Position = UDim2.new(0, 6, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 360)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 440)
 ContentScroll.ScrollBarThickness = 2
 ContentScroll.ScrollBarImageColor3 = CONFIG.THEME.ACCENT
 ContentScroll.Parent = MainFrame
@@ -168,11 +168,76 @@ makeDraggable(MainFrame)
 
 LogoButton.MouseButton1Click:Connect(function()
     State.MenuOpen = not State.MenuOpen
-    local targetSize = State.MenuOpen and UDim2.new(0, 260, 0, 380) or UDim2.new(0, 0, 0, 0)
+    local targetSize = State.MenuOpen and UDim2.new(0, 310, 0, 380) or UDim2.new(0, 0, 0, 0)
     local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
     TweenService:Create(MainFrame, tweenInfo, {Size = targetSize}):Play()
 end)
 
+-- Hàm tạo hàng đôi: Cột trái (Nút chức năng), Cột phải (Ô nhập liệu tuỳ chỉnh)
+local function createSplitRow(name, defaultText, placeholder, layoutOrder, onInputFocusLost)
+    local rowContainer = Instance.new("Frame")
+    rowContainer.Name = name
+    rowContainer.Size = UDim2.new(1, 0, 0, 32)
+    rowContainer.BackgroundTransparency = 1
+    rowContainer.LayoutOrder = layoutOrder
+    rowContainer.Parent = ContentScroll
+
+    -- Cột trái: Nút bấm (chiếm 58%)
+    local btn = Instance.new("TextButton")
+    btn.Name = "Button"
+    btn.Size = UDim2.new(0.58, 0, 1, 0)
+    btn.BackgroundColor3 = CONFIG.THEME.CONTAINER
+    btn.Text = "  " .. defaultText
+    btn.TextColor3 = CONFIG.THEME.WARNING
+    btn.TextSize = 10
+    btn.Font = CONFIG.FONT
+    btn.TextXAlignment = Enum.TextXAlignment.Left
+    btn.AutoButtonColor = false
+    btn.Parent = rowContainer
+
+    local bCorner = Instance.new("UICorner")
+    bCorner.CornerRadius = UDim.new(0, 6)
+    bCorner.Parent = btn
+    local bStroke = Instance.new("UIStroke")
+    bStroke.Color = CONFIG.THEME.WARNING
+    bStroke.Transparency = 0.5
+    bStroke.Thickness = 1
+    bStroke.Parent = btn
+
+    -- Cột phải: Ô nhập liệu (chiếm 39%, cách bên phải 3%)
+    local box = Instance.new("TextBox")
+    box.Name = "InputBox"
+    box.Size = UDim2.new(0.39, 0, 1, 0)
+    box.Position = UDim2.new(0.61, 0, 0, 0)
+    box.BackgroundColor3 = CONFIG.THEME.CONTAINER
+    box.PlaceholderText = "  " .. placeholder
+    box.Text = ""
+    box.TextColor3 = CONFIG.THEME.TEXT_MAIN
+    box.PlaceholderColor3 = CONFIG.THEME.TEXT_MUTED
+    box.TextSize = 10
+    box.Font = CONFIG.FONT
+    box.TextXAlignment = Enum.TextXAlignment.Left
+    box.Parent = rowContainer
+
+    local boxCorner = Instance.new("UICorner")
+    boxCorner.CornerRadius = UDim.new(0, 6)
+    boxCorner.Parent = box
+    local boxStroke = Instance.new("UIStroke")
+    boxStroke.Color = CONFIG.THEME.STROKE
+    boxStroke.Transparency = 0.5
+    boxStroke.Thickness = 1
+    boxStroke.Parent = box
+
+    if onInputFocusLost then
+        box.FocusLost:Connect(function(enter)
+            if enter then onInputFocusLost(box.Text, box) end
+        end)
+    end
+
+    return btn, bStroke, box, rowContainer
+end
+
+-- Hàm tạo nút bấm đơn toàn dòng
 local function createButton(name, defaultText, layoutOrder)
     local btn = Instance.new("TextButton")
     btn.Name = name
@@ -198,34 +263,6 @@ local function createButton(name, defaultText, layoutOrder)
     stroke.Parent = btn
 
     return btn, stroke
-end
-
-local function createInput(name, placeholder, layoutOrder)
-    local box = Instance.new("TextBox")
-    box.Name = name
-    box.Size = UDim2.new(1, 0, 0, 32)
-    box.BackgroundColor3 = CONFIG.THEME.CONTAINER
-    box.PlaceholderText = "  " .. placeholder
-    box.Text = ""
-    box.TextColor3 = CONFIG.THEME.TEXT_MAIN
-    box.PlaceholderColor3 = CONFIG.THEME.TEXT_MUTED
-    box.TextSize = 10
-    box.Font = CONFIG.FONT
-    box.TextXAlignment = Enum.TextXAlignment.Left
-    box.LayoutOrder = layoutOrder
-    box.Parent = ContentScroll
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = box
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = CONFIG.THEME.STROKE
-    stroke.Transparency = 0.5
-    stroke.Thickness = 1
-    stroke.Parent = box
-
-    return box
 end
 
 -- ============================================================================
@@ -500,10 +537,15 @@ task.spawn(function()
     end
 end)
 
--- 5. WalkSpeed Input
-local SpeedBox = createInput("SpeedBox", "Tốc độ chạy (WalkSpeed)...", 5)
-SpeedBox.FocusLost:Connect(function(enter)
-    if not enter then return end
+-- 5. WalkSpeed Split Row (Cột trái nút, cột phải ô nhập số tốc độ)
+local SpeedBtn, SpeedStroke, SpeedBox = createSplitRow("SpeedRow", "TỐC ĐỘ CHẠY", "Nhập tốc độ...", 5, function(text)
+    local val = tonumber(text)
+    if val and LocalPlayer.Character then
+        local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then humanoid.WalkSpeed = val end
+    end
+end)
+SpeedBtn.MouseButton1Click:Connect(function()
     local val = tonumber(SpeedBox.Text)
     if val and LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -511,8 +553,7 @@ SpeedBox.FocusLost:Connect(function(enter)
     end
 end)
 
--- 6. Camera Lock-On (Aimbot) Toggle
-local LockBtn, LockStroke = createButton("LockBtn", "AIM LOCK-ON: TẮT", 6)
+-- 6. Camera Lock-On (Aimbot) Toggle + Nhập kích thước vòng tròn (tối đa 360 độ)
 local ScopeCircle = Drawing.new("Circle")
 ScopeCircle.Visible = false
 ScopeCircle.Thickness = 1.5
@@ -521,6 +562,16 @@ ScopeCircle.Radius = CONFIG.LOCK_RADIUS
 ScopeCircle.Filled = false
 ScopeCircle.Color = CONFIG.THEME.SUCCESS
 ScopeCircle.Transparency = 0.7
+
+local LockBtn, LockStroke, LockRadiusBox = createSplitRow("LockRow", "AIM LOCK-ON: TẮT", "Bán kính (0-360)...", 6, function(text)
+    local val = tonumber(text)
+    if val then
+        if val > 360 then val = 360 elseif val < 0 then val = 0 end
+        CONFIG.LOCK_RADIUS = val
+        ScopeCircle.Radius = val
+        LockRadiusBox.Text = tostring(val)
+    end
+end)
 
 local function isVisible(targetPart, character)
     local localChar = LocalPlayer.Character
@@ -606,7 +657,7 @@ LockBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 7. Teleport Container
+-- 7. Teleport Split Row (Cột trái ô nhập tên/ID, cột phải nút TP)
 local TeleportContainer = Instance.new("Frame")
 TeleportContainer.Size = UDim2.new(1, 0, 0, 32)
 TeleportContainer.BackgroundTransparency = 1
@@ -614,7 +665,7 @@ TeleportContainer.LayoutOrder = 7
 TeleportContainer.Parent = ContentScroll
 
 local TeleportBox = Instance.new("TextBox")
-TeleportBox.Size = UDim2.new(0.72, 0, 1, 0)
+TeleportBox.Size = UDim2.new(0.68, 0, 1, 0)
 TeleportBox.BackgroundColor3 = CONFIG.THEME.CONTAINER
 TeleportBox.PlaceholderText = "  Tên/ID người chơi..."
 TeleportBox.Text = ""
@@ -635,10 +686,10 @@ TBoxStroke.Thickness = 1
 TBoxStroke.Parent = TeleportBox
 
 local TpButton = Instance.new("TextButton")
-TpButton.Size = UDim2.new(0.24, 0, 1, 0)
-TpButton.Position = UDim2.new(0.76, 0, 0, 0)
+TpButton.Size = UDim2.new(0.29, 0, 1, 0)
+TpButton.Position = UDim2.new(0.71, 0, 0, 0)
 TpButton.BackgroundColor3 = CONFIG.THEME.CONTAINER
-TpButton.Text = "TP"
+TpButton.Text = "TELEPORT"
 TpButton.TextColor3 = CONFIG.THEME.ACCENT
 TpButton.TextSize = 10
 TpButton.Font = CONFIG.FONT_BOLD
