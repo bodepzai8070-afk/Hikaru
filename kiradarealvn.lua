@@ -705,7 +705,7 @@ FlyBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================================================
--- 9. YORU PRIME: TOẠ ĐỘ & SAO CHÉP (THIẾT KẾ MỚI CỰC ĐẸP)
+-- 9. YORU PRIME: TOẠ ĐỘ & NÚT SAO CHÉP RIÊNG BIỆT (KHÔNG GÂY LAG)
 -- ============================================================================
 local CoordsBtn, CoordsStroke = createGridCard("CoordsCard", "TOẠ ĐỘ: TẮT", false, "", 9)
 
@@ -718,9 +718,9 @@ if YoruGui.Parent ~= CoreGui then
     YoruGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Khung hiển thị toạ độ phong cách Cyberpunk cao cấp
+-- Khung hiển thị toạ độ & nút sao chép thủ công (Cyberpunk tối ưu)
 local CoordsFrame = Instance.new("Frame")
-CoordsFrame.Size = UDim2.new(0, 240, 0, 85)
+CoordsFrame.Size = UDim2.new(0, 240, 0, 115)
 CoordsFrame.Position = UDim2.new(0.03, 0, 0.45, 0)
 CoordsFrame.BackgroundColor3 = CONFIG.THEME.BG
 CoordsFrame.BackgroundTransparency = 0.15
@@ -753,8 +753,8 @@ CoordsTitleCorner.CornerRadius = UDim.new(0, 10)
 CoordsTitleCorner.Parent = CoordsTitle
 
 local CoordsTextLabel = Instance.new("TextLabel")
-CoordsTextLabel.Size = UDim2.new(1, -16, 0, 36)
-CoordsTextLabel.Position = UDim2.new(0, 8, 0, 32)
+CoordsTextLabel.Size = UDim2.new(1, -16, 0, 32)
+CoordsTextLabel.Position = UDim2.new(0, 8, 0, 30)
 CoordsTextLabel.BackgroundTransparency = 1
 CoordsTextLabel.Text = "X: 0.0 | Y: 0.0 | Z: 0.0"
 CoordsTextLabel.TextColor3 = CONFIG.THEME.TEXT_MAIN
@@ -763,18 +763,43 @@ CoordsTextLabel.Font = CONFIG.FONT_BOLD
 CoordsTextLabel.TextXAlignment = Enum.TextXAlignment.Left
 CoordsTextLabel.Parent = CoordsFrame
 
-local CopyNotice = Instance.new("TextLabel")
-CopyNotice.Size = UDim2.new(1, -16, 0, 16)
-CopyNotice.Position = UDim2.new(0, 8, 0, 64)
-CopyNotice.BackgroundTransparency = 1
-CopyNotice.Text = "Đã tự động sao chép vào bộ nhớ tạm"
-CopyNotice.TextColor3 = CONFIG.THEME.SUCCESS
-CopyNotice.TextSize = 8
-CopyNotice.Font = CONFIG.FONT
-CopyNotice.TextXAlignment = Enum.TextXAlignment.Left
-CopyNotice.Parent = CoordsFrame
+-- Nút bấm sao chép thủ công chuyên dụng (Tránh spam liên tục gây lag game)
+local CopyButton = Instance.new("TextButton")
+CopyButton.Size = UDim2.new(1, -16, 0, 28)
+CopyButton.Position = UDim2.new(0, 8, 0, 72)
+CopyButton.BackgroundColor3 = CONFIG.THEME.CONTAINER
+CopyButton.Text = "SAO CHÉP TOẠ ĐỘ"
+CopyButton.TextColor3 = CONFIG.THEME.SUCCESS
+CopyButton.TextSize = 9
+CopyButton.Font = CONFIG.FONT_BOLD
+CopyButton.AutoButtonColor = false
+CopyButton.Parent = CoordsFrame
+
+local CopyBtnCorner = Instance.new("UICorner")
+CopyBtnCorner.CornerRadius = UDim.new(0, 6)
+CopyBtnCorner.Parent = CopyButton
+
+local CopyBtnStroke = Instance.new("UIStroke")
+CopyBtnStroke.Color = CONFIG.THEME.SUCCESS
+CopyBtnStroke.Transparency = 0.4
+CopyBtnStroke.Thickness = 1
+CopyBtnStroke.Parent = CopyButton
 
 makeDraggable(CoordsFrame)
+
+-- Biến lưu giữ toạ độ hiện tại để bấm nút là copy ngay
+local latestPosString = "X: 0.0 | Y: 0.0 | Z: 0.0"
+
+CopyButton.MouseButton1Click:Connect(function()
+    pcall(function()
+        if setclipboard then
+            setclipboard(latestPosString)
+            CopyButton.Text = "ĐÃ SAO CHÉP THÀNH CÔNG!"
+            task.wait(1)
+            CopyButton.Text = "SAO CHÉP TOẠ ĐỘ"
+        end
+    end)
+end)
 
 CoordsBtn.MouseButton1Click:Connect(function()
     State.CoordsActive = not State.CoordsActive
@@ -789,13 +814,8 @@ CoordsBtn.MouseButton1Click:Connect(function()
             local root = char and char:FindFirstChild("HumanoidRootPart")
             if root then
                 local pos = root.Position
-                local posStr = string.format("X: %.1f | Y: %.1f | Z: %.1f", pos.X, pos.Y, pos.Z)
-                CoordsTextLabel.Text = posStr
-                pcall(function()
-                    if setclipboard then
-                        setclipboard(posStr)
-                    end
-                end)
+                latestPosString = string.format("X: %.1f | Y: %.1f | Z: %.1f", pos.X, pos.Y, pos.Z)
+                CoordsTextLabel.Text = latestPosString
             end
         end)
     else
