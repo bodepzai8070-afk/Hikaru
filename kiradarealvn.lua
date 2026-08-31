@@ -1,6 +1,5 @@
 -- ============================================================================
 -- AXIOM // ELITE CYBERNETIC MASTER SUITE (DELTA EXECUTOR)
--- FULLY INTEGRATED: HUD + ESP + NOCLIP + JUMP + SMART FPS + AIMBOT + TELEPORT
 -- ============================================================================
 if _G.AxiomEliteSuiteExecuted then return end
 _G.AxiomEliteSuiteExecuted = true
@@ -53,7 +52,7 @@ local State = {
 }
 
 -- ============================================================================
--- GIAO DIỆN CHÍNH: CYBERNETIC COMPACT HUD
+-- GIAO DIỆN CHÍNH: CYBERNETIC COMPACT HUD (LOGOTYPE: K)
 -- ============================================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Axiom_Elite_Suite"
@@ -65,13 +64,13 @@ if ScreenGui.Parent ~= CoreGui then
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- Nút Logo mở/đóng tối giản, sang trọng
+-- Nút Logo mở/đóng gọn gàng với chữ 'k'
 local LogoButton = Instance.new("TextButton")
 LogoButton.Name = "LogoButton"
 LogoButton.Size = UDim2.new(0, 42, 0, 42)
 LogoButton.Position = UDim2.new(0.03, 0, 0.07, 0)
 LogoButton.BackgroundColor3 = CONFIG.THEME.BG
-LogoButton.Text = "Δ"
+LogoButton.Text = "k"
 LogoButton.TextColor3 = CONFIG.THEME.ACCENT
 LogoButton.TextSize = 18
 LogoButton.Font = CONFIG.FONT_BOLD
@@ -174,7 +173,6 @@ LogoButton.MouseButton1Click:Connect(function()
     TweenService:Create(MainFrame, tweenInfo, {Size = targetSize}):Play()
 end)
 
--- Hàm tạo nút bấm phong cách Cyber-Minimalist
 local function createButton(name, defaultText, layoutOrder)
     local btn = Instance.new("TextButton")
     btn.Name = name
@@ -202,7 +200,6 @@ local function createButton(name, defaultText, layoutOrder)
     return btn, stroke
 end
 
--- Hàm tạo ô nhập liệu gọn gàng
 local function createInput(name, placeholder, layoutOrder)
     local box = Instance.new("TextBox")
     box.Name = name
@@ -256,7 +253,6 @@ EspBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Quản lý ESP Pool
 local function acquireESPNode(player)
     if State.ActivePool[player] then return State.ActivePool[player] end
     local billboard = Instance.new("BillboardGui")
@@ -466,7 +462,6 @@ Workspace.DescendantAdded:Connect(function(obj)
     task.defer(function() smartOptimizeObject(obj) end)
 end)
 
--- Vòng lặp ngầm culling player xa & giải phóng RAM định kỳ
 task.spawn(function()
     while true do
         task.wait(3)
