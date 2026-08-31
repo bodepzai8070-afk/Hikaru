@@ -52,7 +52,7 @@ local State = {
 }
 
 -- ============================================================================
--- GIAO DIỆN CHÍNH: CYBERNETIC COMPACT HUD (LOGOTYPE: K)
+-- GIAO DIỆN CHÍNH: CYBERNETIC GRID HUD (LOGOTYPE: K)
 -- ============================================================================
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "Kiradavn_Prime_Suite"
@@ -87,10 +87,10 @@ LogoStroke.Transparency = 0.4
 LogoStroke.Thickness = 1.2
 LogoStroke.Parent = LogoButton
 
--- Main Frame rộng hơn một chút để chứa giao diện 2 cột gọn gàng
+-- Main Frame mở rộng vừa vặn để hiển thị lưới 2 cột mỗi hàng
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 310, 0, 380)
+MainFrame.Size = UDim2.new(0, 340, 0, 310)
 MainFrame.Position = UDim2.new(0.03, 52, 0.07, 0)
 MainFrame.BackgroundColor3 = CONFIG.THEME.BG
 MainFrame.BackgroundTransparency = 0.08
@@ -125,21 +125,22 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 12)
 TitleCorner.Parent = TitleBar
 
--- Scrolling Frame chứa các tính năng chia thành 2 hàng cho mỗi chức năng
+-- Scrolling Frame chứa danh sách các ô chức năng
 local ContentScroll = Instance.new("ScrollingFrame")
 ContentScroll.Size = UDim2.new(1, -12, 1, -44)
 ContentScroll.Position = UDim2.new(0, 6, 0, 40)
 ContentScroll.BackgroundTransparency = 1
 ContentScroll.BorderSizePixel = 0
-ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 440)
+ContentScroll.CanvasSize = UDim2.new(0, 0, 0, 320)
 ContentScroll.ScrollBarThickness = 2
 ContentScroll.ScrollBarImageColor3 = CONFIG.THEME.ACCENT
 ContentScroll.Parent = MainFrame
 
-local UIListLayout = Instance.new("UIListLayout")
-UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-UIListLayout.Padding = UDim.new(0, 6)
-UIListLayout.Parent = ContentScroll
+local UIGridLayout = Instance.new("UIGridLayout")
+UIGridLayout.CellSize = UDim2.new(0, 158, 0, 62)
+UIGridLayout.CellPadding = UDim2.new(0, 6, 0, 6)
+UIGridLayout.SortOrder = Enum.SortOrder.LayoutOrder
+UIGridLayout.Parent = ContentScroll
 
 local function makeDraggable(obj)
     local dragging, dragStart, startPos
@@ -168,120 +169,99 @@ makeDraggable(MainFrame)
 
 LogoButton.MouseButton1Click:Connect(function()
     State.MenuOpen = not State.MenuOpen
-    local targetSize = State.MenuOpen and UDim2.new(0, 310, 0, 380) or UDim2.new(0, 0, 0, 0)
+    local targetSize = State.MenuOpen and UDim2.new(0, 340, 0, 310) or UDim2.new(0, 0, 0, 0)
     local tweenInfo = TweenInfo.new(0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out)
     TweenService:Create(MainFrame, tweenInfo, {Size = targetSize}):Play()
 end)
 
--- Hàm tạo hàng đôi: Cột trái (Nút chức năng), Cột phải (Ô nhập liệu tuỳ chỉnh)
-local function createSplitRow(name, defaultText, placeholder, layoutOrder, onInputFocusLost)
-    local rowContainer = Instance.new("Frame")
-    rowContainer.Name = name
-    rowContainer.Size = UDim2.new(1, 0, 0, 32)
-    rowContainer.BackgroundTransparency = 1
-    rowContainer.LayoutOrder = layoutOrder
-    rowContainer.Parent = ContentScroll
-
-    -- Cột trái: Nút bấm (chiếm 58%)
-    local btn = Instance.new("TextButton")
-    btn.Name = "Button"
-    btn.Size = UDim2.new(0.58, 0, 1, 0)
-    btn.BackgroundColor3 = CONFIG.THEME.CONTAINER
-    btn.Text = "  " .. defaultText
-    btn.TextColor3 = CONFIG.THEME.WARNING
-    btn.TextSize = 10
-    btn.Font = CONFIG.FONT
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.AutoButtonColor = false
-    btn.Parent = rowContainer
-
-    local bCorner = Instance.new("UICorner")
-    bCorner.CornerRadius = UDim.new(0, 6)
-    bCorner.Parent = btn
-    local bStroke = Instance.new("UIStroke")
-    bStroke.Color = CONFIG.THEME.WARNING
-    bStroke.Transparency = 0.5
-    bStroke.Thickness = 1
-    bStroke.Parent = btn
-
-    -- Cột phải: Ô nhập liệu (chiếm 39%, cách bên phải 3%)
-    local box = Instance.new("TextBox")
-    box.Name = "InputBox"
-    box.Size = UDim2.new(0.39, 0, 1, 0)
-    box.Position = UDim2.new(0.61, 0, 0, 0)
-    box.BackgroundColor3 = CONFIG.THEME.CONTAINER
-    box.PlaceholderText = "  " .. placeholder
-    box.Text = ""
-    box.TextColor3 = CONFIG.THEME.TEXT_MAIN
-    box.PlaceholderColor3 = CONFIG.THEME.TEXT_MUTED
-    box.TextSize = 10
-    box.Font = CONFIG.FONT
-    box.TextXAlignment = Enum.TextXAlignment.Left
-    box.Parent = rowContainer
-
-    local boxCorner = Instance.new("UICorner")
-    boxCorner.CornerRadius = UDim.new(0, 6)
-    boxCorner.Parent = box
-    local boxStroke = Instance.new("UIStroke")
-    boxStroke.Color = CONFIG.THEME.STROKE
-    boxStroke.Transparency = 0.5
-    boxStroke.Thickness = 1
-    boxStroke.Parent = box
-
-    if onInputFocusLost then
-        box.FocusLost:Connect(function(enter)
-            if enter then onInputFocusLost(box.Text, box) end
-        end)
-    end
-
-    return btn, bStroke, box, rowContainer
-end
-
--- Hàm tạo nút bấm đơn toàn dòng
-local function createButton(name, defaultText, layoutOrder)
-    local btn = Instance.new("TextButton")
-    btn.Name = name
-    btn.Size = UDim2.new(1, 0, 0, 32)
-    btn.BackgroundColor3 = CONFIG.THEME.CONTAINER
-    btn.Text = "  " .. defaultText
-    btn.TextColor3 = CONFIG.THEME.WARNING
-    btn.TextSize = 10
-    btn.Font = CONFIG.FONT
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.AutoButtonColor = false
-    btn.LayoutOrder = layoutOrder
-    btn.Parent = ContentScroll
+-- Hàm tạo card lưới ô vuông gọn gàng (Nút trên, ô nhập dưới nếu có)
+local function createGridCard(name, defaultText, hasInput, placeholder, layoutOrder, onInputFocusLost)
+    local card = Instance.new("Frame")
+    card.Name = name
+    card.Size = UDim2.new(0, 158, 0, 62)
+    card.BackgroundColor3 = CONFIG.THEME.CONTAINER
+    card.BackgroundTransparency = 0.3
+    card.BorderSizePixel = 0
+    card.LayoutOrder = layoutOrder
+    card.Parent = ContentScroll
 
     local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = btn
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = card
 
     local stroke = Instance.new("UIStroke")
     stroke.Color = CONFIG.THEME.WARNING
     stroke.Transparency = 0.5
     stroke.Thickness = 1
-    stroke.Parent = btn
+    stroke.Parent = card
 
-    return btn, stroke
+    local btn = Instance.new("TextButton")
+    btn.Name = "Button"
+    btn.Size = hasInput and UDim2.new(1, -8, 0, 26) or UDim2.new(1, -8, 1, -8)
+    btn.Position = UDim2.new(0, 4, 0, 4)
+    btn.BackgroundColor3 = CONFIG.THEME.CONTAINER
+    btn.Text = defaultText
+    btn.TextColor3 = CONFIG.THEME.WARNING
+    btn.TextSize = 10
+    btn.Font = CONFIG.FONT_BOLD
+    btn.AutoButtonColor = false
+    btn.Parent = card
+
+    local bCorner = Instance.new("UICorner")
+    bCorner.CornerRadius = UDim.new(0, 6)
+    bCorner.Parent = btn
+
+    local box = nil
+    if hasInput then
+        box = Instance.new("TextBox")
+        box.Name = "InputBox"
+        box.Size = UDim2.new(1, -8, 0, 24)
+        box.Position = UDim2.new(0, 4, 0, 33)
+        box.BackgroundColor3 = CONFIG.THEME.BG
+        box.PlaceholderText = placeholder
+        box.Text = ""
+        box.TextColor3 = CONFIG.THEME.TEXT_MAIN
+        box.PlaceholderColor3 = CONFIG.THEME.TEXT_MUTED
+        box.TextSize = 9
+        box.Font = CONFIG.FONT
+        box.Parent = card
+
+        local boxCorner = Instance.new("UICorner")
+        boxCorner.CornerRadius = UDim.new(0, 6)
+        boxCorner.Parent = box
+        local boxStroke = Instance.new("UIStroke")
+        boxStroke.Color = CONFIG.THEME.STROKE
+        boxStroke.Transparency = 0.5
+        boxStroke.Thickness = 1
+        boxStroke.Parent = box
+
+        if onInputFocusLost then
+            box.FocusLost:Connect(function(enter)
+                if enter then onInputFocusLost(box.Text, box) end
+            end)
+        end
+    end
+
+    return btn, stroke, box, card
 end
 
 -- ============================================================================
--- XÂY DỰNG CÁC TÍNH NĂNG TRONG MENU
+-- XÂY DỰNG CÁC TÍNH NĂNG TRONG MENU (MỖI HÀNG 2 CHỨC NĂNG)
 -- ============================================================================
 
 -- 1. ESP Toggle
-local EspBtn, EspStroke = createButton("EspBtn", "ESP: BẬT", 1)
+local EspBtn, EspStroke = createGridCard("EspCard", "ESP: BẬT", false, "", 1)
 EspBtn.TextColor3 = CONFIG.THEME.SUCCESS
 EspStroke.Color = CONFIG.THEME.SUCCESS
 
 EspBtn.MouseButton1Click:Connect(function()
     State.EspEnabled = not State.EspEnabled
     if State.EspEnabled then
-        EspBtn.Text = "  ESP: BẬT"
+        EspBtn.Text = "ESP: BẬT"
         EspBtn.TextColor3 = CONFIG.THEME.SUCCESS
         EspStroke.Color = CONFIG.THEME.SUCCESS
     else
-        EspBtn.Text = "  ESP: TẮT"
+        EspBtn.Text = "ESP: TẮT"
         EspBtn.TextColor3 = CONFIG.THEME.WARNING
         EspStroke.Color = CONFIG.THEME.WARNING
         for _, data in pairs(State.ActivePool) do
@@ -356,7 +336,7 @@ task.spawn(function()
 end)
 
 -- 2. Noclip Toggle
-local NoclipBtn, NoclipStroke = createButton("NoclipBtn", "NOCLIP: TẮT", 2)
+local NoclipBtn, NoclipStroke = createGridCard("NoclipCard", "NOCLIP: TẮT", false, "", 2)
 local function cacheCharacterParts(char)
     table.clear(State.CachedCharacterParts)
     table.clear(State.OriginalCollisionStates)
@@ -377,7 +357,7 @@ if LocalPlayer.Character then cacheCharacterParts(LocalPlayer.Character) end
 NoclipBtn.MouseButton1Click:Connect(function()
     State.NoclipActive = not State.NoclipActive
     if State.NoclipActive then
-        NoclipBtn.Text = "  NOCLIP: BẬT"
+        NoclipBtn.Text = "NOCLIP: BẬT"
         NoclipBtn.TextColor3 = CONFIG.THEME.SUCCESS
         NoclipStroke.Color = CONFIG.THEME.SUCCESS
         if LocalPlayer.Character then cacheCharacterParts(LocalPlayer.Character) end
@@ -389,7 +369,7 @@ NoclipBtn.MouseButton1Click:Connect(function()
             end
         end)
     else
-        NoclipBtn.Text = "  NOCLIP: TẮT"
+        NoclipBtn.Text = "NOCLIP: TẮT"
         NoclipBtn.TextColor3 = CONFIG.THEME.WARNING
         NoclipStroke.Color = CONFIG.THEME.WARNING
         if State.NoclipConnection then State.NoclipConnection:Disconnect(); State.NoclipConnection = nil end
@@ -403,11 +383,11 @@ NoclipBtn.MouseButton1Click:Connect(function()
 end)
 
 -- 3. Infinity Jump Toggle
-local JumpBtn, JumpStroke = createButton("JumpBtn", "NHẢY VÔ CỰC: TẮT", 3)
+local JumpBtn, JumpStroke = createGridCard("JumpCard", "NHẢY VÔ CỰC: TẮT", false, "", 3)
 JumpBtn.MouseButton1Click:Connect(function()
     State.InfinityJumpActive = not State.InfinityJumpActive
     if State.InfinityJumpActive then
-        JumpBtn.Text = "  NHẢY VÔ CỰC: BẬT"
+        JumpBtn.Text = "NHẢY VÔ CỰC: BẬT"
         JumpBtn.TextColor3 = CONFIG.THEME.SUCCESS
         JumpStroke.Color = CONFIG.THEME.SUCCESS
         State.JumpConnection = UserInputService.JumpRequest:Connect(function()
@@ -419,7 +399,7 @@ JumpBtn.MouseButton1Click:Connect(function()
             end
         end)
     else
-        JumpBtn.Text = "  NHẢY VÔ CỰC: TẮT"
+        JumpBtn.Text = "NHẢY VÔ CỰC: TẮT"
         JumpBtn.TextColor3 = CONFIG.THEME.WARNING
         JumpStroke.Color = CONFIG.THEME.WARNING
         if State.JumpConnection then State.JumpConnection:Disconnect(); State.JumpConnection = nil end
@@ -427,7 +407,7 @@ JumpBtn.MouseButton1Click:Connect(function()
 end)
 
 -- 4. FPS Booster & Smart Render Toggle
-local LagBtn, LagStroke = createButton("LagBtn", "TỐI ƯU FPS: TẮT", 4)
+local LagBtn, LagStroke = createGridCard("LagCard", "TỐI ƯU FPS: TẮT", false, "", 4)
 local function isImportant(obj)
     if not obj then return false end
     local name = obj.Name:lower()
@@ -481,12 +461,12 @@ LagBtn.MouseButton1Click:Connect(function()
             end
             pcall(function() collectgarbage("collect") end)
         end)
-        LagBtn.Text = "  TỐI ƯU FPS: BẬT"
+        LagBtn.Text = "TỐI ƯU FPS: BẬT"
         LagBtn.TextColor3 = CONFIG.THEME.SUCCESS
         LagStroke.Color = CONFIG.THEME.SUCCESS
     else
         Lighting.GlobalShadows = true
-        LagBtn.Text = "  TỐI ƯU FPS: TẮT"
+        LagBtn.Text = "TỐI ƯU FPS: TẮT"
         LagBtn.TextColor3 = CONFIG.THEME.WARNING
         LagStroke.Color = CONFIG.THEME.WARNING
     end
@@ -537,8 +517,8 @@ task.spawn(function()
     end
 end)
 
--- 5. WalkSpeed Split Row (Cột trái nút, cột phải ô nhập số tốc độ)
-local SpeedBtn, SpeedStroke, SpeedBox = createSplitRow("SpeedRow", "TỐC ĐỘ CHẠY", "Nhập tốc độ...", 5, function(text)
+-- 5. WalkSpeed Card (Nút trên, ô nhập tốc độ dưới)
+local SpeedBtn, SpeedStroke, SpeedBox = createGridCard("SpeedCard", "TỐC ĐỘ CHẠY", true, "Nhập tốc độ...", 5, function(text)
     local val = tonumber(text)
     if val and LocalPlayer.Character then
         local humanoid = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -553,7 +533,7 @@ SpeedBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 6. Camera Lock-On (Aimbot) Toggle + Nhập kích thước vòng tròn (tối đa 360 độ)
+-- 6. Camera Lock-On Card (Nút trên, ô nhập bán kính vòng tròn dưới)
 local ScopeCircle = Drawing.new("Circle")
 ScopeCircle.Visible = false
 ScopeCircle.Thickness = 1.5
@@ -563,7 +543,7 @@ ScopeCircle.Filled = false
 ScopeCircle.Color = CONFIG.THEME.SUCCESS
 ScopeCircle.Transparency = 0.7
 
-local LockBtn, LockStroke, LockRadiusBox = createSplitRow("LockRow", "AIM LOCK-ON: TẮT", "Bán kính (0-360)...", 6, function(text)
+local LockBtn, LockStroke, LockRadiusBox = createGridCard("LockCard", "AIM LOCK-ON: TẮT", true, "Bán kính (0-360)...", 6, function(text)
     local val = tonumber(text)
     if val then
         if val > 360 then val = 360 elseif val < 0 then val = 0 end
@@ -643,12 +623,12 @@ end
 LockBtn.MouseButton1Click:Connect(function()
     State.LockOnActive = not State.LockOnActive
     if State.LockOnActive then
-        LockBtn.Text = "  AIM LOCK-ON: BẬT"
+        LockBtn.Text = "AIM LOCK-ON: BẬT"
         LockBtn.TextColor3 = CONFIG.THEME.SUCCESS
         LockStroke.Color = CONFIG.THEME.SUCCESS
         State.LockOnConnection = RunService.RenderStepped:Connect(onRenderStepped)
     else
-        LockBtn.Text = "  AIM LOCK-ON: TẮT"
+        LockBtn.Text = "AIM LOCK-ON: TẮT"
         LockBtn.TextColor3 = CONFIG.THEME.WARNING
         LockStroke.Color = CONFIG.THEME.WARNING
         if State.LockOnConnection then State.LockOnConnection:Disconnect(); State.LockOnConnection = nil end
@@ -657,53 +637,11 @@ LockBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- 7. Teleport Split Row (Cột trái ô nhập tên/ID, cột phải nút TP)
-local TeleportContainer = Instance.new("Frame")
-TeleportContainer.Size = UDim2.new(1, 0, 0, 32)
-TeleportContainer.BackgroundTransparency = 1
-TeleportContainer.LayoutOrder = 7
-TeleportContainer.Parent = ContentScroll
-
-local TeleportBox = Instance.new("TextBox")
-TeleportBox.Size = UDim2.new(0.68, 0, 1, 0)
-TeleportBox.BackgroundColor3 = CONFIG.THEME.CONTAINER
-TeleportBox.PlaceholderText = "  Tên/ID người chơi..."
-TeleportBox.Text = ""
-TeleportBox.TextColor3 = CONFIG.THEME.TEXT_MAIN
-TeleportBox.PlaceholderColor3 = CONFIG.THEME.TEXT_MUTED
-TeleportBox.TextSize = 10
-TeleportBox.Font = CONFIG.FONT
-TeleportBox.TextXAlignment = Enum.TextXAlignment.Left
-TeleportBox.Parent = TeleportContainer
-
-local TBoxCorner = Instance.new("UICorner")
-TBoxCorner.CornerRadius = UDim.new(0, 6)
-TBoxCorner.Parent = TeleportBox
-local TBoxStroke = Instance.new("UIStroke")
-TBoxStroke.Color = CONFIG.THEME.STROKE
-TBoxStroke.Transparency = 0.5
-TBoxStroke.Thickness = 1
-TBoxStroke.Parent = TeleportBox
-
-local TpButton = Instance.new("TextButton")
-TpButton.Size = UDim2.new(0.29, 0, 1, 0)
-TpButton.Position = UDim2.new(0.71, 0, 0, 0)
-TpButton.BackgroundColor3 = CONFIG.THEME.CONTAINER
-TpButton.Text = "TELEPORT"
+-- 7. Teleport Card (Nút TP trên, ô nhập tên/ID dưới)
+local TpButton, TpStroke, TeleportBox = createGridCard("TeleportCard", "TELEPORT", true, "Tên/ID người chơi...", 7, function() end)
 TpButton.TextColor3 = CONFIG.THEME.ACCENT
-TpButton.TextSize = 10
+TpStroke.Color = CONFIG.THEME.ACCENT
 TpButton.Font = CONFIG.FONT_BOLD
-TpButton.AutoButtonColor = false
-TpButton.Parent = TeleportContainer
-
-local TpBtnCorner = Instance.new("UICorner")
-TpBtnCorner.CornerRadius = UDim.new(0, 6)
-TpBtnCorner.Parent = TpButton
-local TpBtnStroke = Instance.new("UIStroke")
-TpBtnStroke.Color = CONFIG.THEME.ACCENT
-TpBtnStroke.Transparency = 0.5
-TpBtnStroke.Thickness = 1
-TpBtnStroke.Parent = TpButton
 
 TpButton.MouseButton1Click:Connect(function()
     local query = TeleportBox.Text:lower()
